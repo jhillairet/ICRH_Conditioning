@@ -78,15 +78,15 @@ def plot_conditionning_data(data):
     ax[1,0].set_ylabel('Voltage [V]')
     plt.tight_layout()
 
-
-# Copy the recent data file into the local directory
-remote_file_list = list_remote_files()
-copy_remote_files_to_local(remote_file_list)
-
-# Plot the last data file. 
-local_file_list = list_local_files()
-data = read_conditoning_data(local_file_list[-1])
-plot_conditionning_data(data)
+if __name__ == '__main__':
+    # Copy the recent data file into the local directory
+    remote_file_list = list_remote_files()
+    copy_remote_files_to_local(remote_file_list)
+    
+    # Plot the last data file. 
+    local_file_list = list_local_files()
+    data = read_conditoning_data(local_file_list[-1])
+    plot_conditionning_data(data)
 
 
 
