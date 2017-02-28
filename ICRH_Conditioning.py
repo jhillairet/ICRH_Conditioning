@@ -12,6 +12,7 @@ import glob
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
 def list_remote_files(remote_path='/media/ssd/Conditionnement/'):
     """
     Returns a list of the remote files (.csv) located in the remote acquisition computer.
@@ -31,7 +32,8 @@ def list_local_files(local_data_path = 'data/'):
     local_file_list = [os.path.basename(x) for x in glob.glob(local_data_path+'/*.csv')]    
     return local_file_list
 
-def copy_remote_files_to_local(remote_file_list, local_data_path = 'data/'):
+def copy_remote_files_to_local(remote_file_list, local_data_path = 'data/', 
+                               remote_data_path='/media/ssd/Conditionnement/'):
     """
     Copy a list of remote files into the local directory, only if the files do
     not exist locally.
@@ -42,9 +44,12 @@ def copy_remote_files_to_local(remote_file_list, local_data_path = 'data/'):
     for file in remote_file_list:
         if file not in local_file_list:
             print('Copying file {}'.format(os.path.join(remote_data_path, file)))
-            cp=subprocess.Popen(['scp', 'dfci@dfci:'+os.path.join(remote_data_path, file), local_data_path],
+            # Use call() instead of Popen() in order to block and not continue until end of copying
+            cp=subprocess.call(['scp', 'dfci@dfci:'+os.path.join(remote_data_path, file), local_data_path],
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                               universal_newlines=True)
+
+        
         
 def read_conditoning_data(filename):
     """
