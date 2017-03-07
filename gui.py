@@ -96,7 +96,12 @@ class AppForm(QMainWindow):
 
 
 def main():
-    app = QApplication(sys.argv)
+    # Hack to be able to run the code from spyder
+    # taken from http://stackoverflow.com/questions/19459299/running-a-pyqt-application-twice-from-one-prompt-in-spyder
+    if QCoreApplication.instance() != None:
+        app = QCoreApplication.instance()
+    else:
+        app = QApplication(sys.argv)
     form = AppForm()
     form.show()
     app.exec_()
