@@ -1,13 +1,23 @@
 import sys
-import numpy as np
+import matplotlib
 from matplotlib.figure import Figure
 from matplotlib.backend_bases import key_press_handler
-from matplotlib.backends.backend_qt4agg import (
+
+
+try:
+    from PyQt4.QtCore import *
+    from PyQt4.QtGui import *
+    from matplotlib.backends.backend_qt4agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
-
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+except ModuleNotFoundError:
+    from PyQt5.QtCore import *
+    from PyQt5.QtGui import * 
+    from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QPushButton, QVBoxLayout
+    from matplotlib.backends.backend_qt5agg import (
+    FigureCanvasQTAgg as FigureCanvas,
+    NavigationToolbar2QT as NavigationToolbar)
+    matplotlib.use('Qt5Agg')
 
 from ICRH_Conditioning import *
 
@@ -23,6 +33,7 @@ class AppForm(QMainWindow):
 
         self.fig = Figure((10.0, 6.0), dpi=100)
         self.canvas = FigureCanvas(self.fig)
+        # Embedding in Qt4
         self.canvas.setParent(self.main_frame)
         
         self.plot_button = QPushButton('Plot', parent=self.main_frame)
