@@ -61,6 +61,9 @@ def read_conditoning_data(filename):
     return data 
 
 def read_conditioning_metadata(filename):
+    """
+    Import and return the ICRH Conditioning metadata into a dictionary
+    """
     para_dic = {}
     with  open(filename,'r') as cmt_file:    # open file
         for line in cmt_file:    # read each line
