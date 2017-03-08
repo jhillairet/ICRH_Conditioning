@@ -23,6 +23,7 @@ def list_remote_files(remote_path='/media/ssd/Conditionnement/'):
     out, err =  ls.communicate()
     remote_file_list = out.split(sep='\n')
     remote_file_list.pop() # The last one is a dummy ''
+    remote_file_list = sorted(remote_file_list, reverse=True) # Most recent first
     return remote_file_list
 
 def list_local_files(local_data_path = 'data/'):
@@ -30,18 +31,22 @@ def list_local_files(local_data_path = 'data/'):
     Returns the list of local files (.csv)
     """
     local_file_list = [os.path.basename(x) for x in glob.glob(local_data_path+'/*.csv')]    
+    # Sorted to most recent
+    local_file_list = sorted(local_file_list, reverse=True)
     return local_file_list
 
 def copy_remote_files_to_local(remote_file_list, local_data_path = 'data/', 
-                               remote_data_path='/media/ssd/Conditionnement/'):
+                               remote_data_path='/media/ssd/Conditionnement/', 
+                               nb_last_file_to_download=10):
     """
     Copy a list of remote files into the local directory, only if the files do
     not exist locally.
+    Download only the last (most recent) nb_last_file_to_download files.
     """
     # List the files allready present in the local directory
     local_file_list = list_local_files(local_data_path)
     # Copy files through scp when the file does not exist locally
-    for file in remote_file_list:
+    for file in remote_file_list[:nb_last_file_to_download]:
         if file not in local_file_list:
             print('Copying file {}'.format(os.path.join(remote_data_path, file)))
             # Use call() instead of Popen() in order to block and not continue until end of copying
@@ -55,8 +60,11 @@ def read_conditoning_data(filename):
     """
     Import and return the ICRH Conditioning data into a pandas DataFrame
     """
-    data = pd.read_csv('data/2017-02-27_14-58-03.csv', delimiter='\t', skiprows=16, 
-                names=('Temps','PiG','PrG','PiD','PrD','V1','V2','V3','V4'),
+    data = pd.read_csv(os.path.join('data',filename), delimiter='\t', skiprows=18, 
+                names=('Temps',
+                       'PiG','PrG','PiD','PrD',
+                       'V1','V2','V3','V4', 
+                       'Ph(V1-V3)','Ph(V2-V4)','Ph(Pig-Pid)', 'bidon'),
                 index_col='Temps')
     return data 
 
@@ -65,7 +73,7 @@ def read_conditioning_metadata(filename):
     Import and return the ICRH Conditioning metadata into a dictionary
     """
     para_dic = {}
-    with  open(filename,'r') as cmt_file:    # open file
+    with  open(os.path.join('data',filename),'r') as cmt_file:    # open file
         for line in cmt_file:    # read each line
             if line[0] == '#':    # check the first character
                 line = line[1:]    # remove first '#'
