@@ -60,6 +60,16 @@ def read_conditoning_data(filename):
                 index_col='Temps')
     return data 
 
+def read_conditioning_metadata(filename):
+    para_dic = {}
+    with  open(filename,'r') as cmt_file:    # open file
+        for line in cmt_file:    # read each line
+            if line[0] == '#':    # check the first character
+                line = line[1:]    # remove first '#'
+                para = line.split('=')     # seperate string by '='
+                if len(para) == 2:
+                    para_dic[ para[0].strip()] = para[1].strip()
+    return para_dic    
 
 def plot_conditionning_data(data):
     """
