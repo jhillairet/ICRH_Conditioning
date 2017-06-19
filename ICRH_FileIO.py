@@ -50,6 +50,7 @@ def copy_remote_files_to_local(remote_file_list, local_data_path = 'data/',
             cp=subprocess.call(['scp', 'dfci@dfci:'+os.path.join(remote_data_path, file), local_data_path],
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                               universal_newlines=True)
+            
     print('OK, done.')
     
 if __name__ == '__main__':

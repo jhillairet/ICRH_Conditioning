@@ -1,9 +1,8 @@
 import sys
-import matplotlib
 from matplotlib.figure import Figure
 import ICRH_FastData as fast
 import ICRH_FileIO as io
-import os
+import matplotlib
 
 # Qt5/Qt4 compatibility
 try: 
@@ -11,7 +10,7 @@ try:
     import PyQt5.QtGui as QtGui 
     import PyQt5.QtWidgets as QtWidgets
     from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QPushButton, QListWidget,
-                                 QHBoxLayout, QVBoxLayout, QTableWidget, QTableWidgetItem)
+                                 QHBoxLayout, QVBoxLayout)
     from matplotlib.backends.backend_qt5agg import (
             FigureCanvasQTAgg as FigureCanvas,
             NavigationToolbar2QT as NavigationToolbar)
@@ -21,14 +20,16 @@ except ImportError:
     import PyQt4.QtGui as QtGui
     import PyQt4.QtGui as QtWidgets
     from PyQt4.QtGui import (QMainWindow, QApplication, QWidget, QPushButton, QListWidget,
-                                 QHBoxLayout, QVBoxLayout, QTableWidget, QTableWidgetItem)
+                                 QHBoxLayout, QVBoxLayout)
     from matplotlib.backends.backend_qt4agg import (
             FigureCanvasQTAgg as FigureCanvas,
             NavigationToolbar2QT as NavigationToolbar)
     matplotlib.use('Qt4Agg')
 
-
-
+import pyqtgraph as pg
+# switch default plotting scheme to white
+pg.setConfigOption('background', 'w')
+pg.setConfigOption('foreground', 'k')
 
 
 class AppForm(QMainWindow):
@@ -66,6 +67,11 @@ class AppForm(QMainWindow):
         self.refresh_button.setFont(button_default_font)
         self.refresh_button.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_BrowserReload))
         self.refresh_button.clicked.connect(self.refresh)
+        # Plot button
+        self.plot_button = QPushButton('Plot', parent=self.main_frame)
+        self.plot_button.setFont(button_default_font)
+        self.plot_button.clicked.connect(self.update_plot)                                   
+
         # Conditioning Shots List
         self.shot_list_widget = QListWidget()
         self.shot_list_widget.setFont(item_default_font)
@@ -75,14 +81,33 @@ class AppForm(QMainWindow):
         vbox_shots = QVBoxLayout()
         vbox_shots.addWidget(self.refresh_button)
         vbox_shots.addWidget(self.shot_list_widget)
+        vbox_shots.addWidget(self.plot_button)
         
         vbox_canvas = QVBoxLayout()
-        vbox_canvas.addWidget(self.canvas)  # the matplotlib canvas
-        vbox_canvas.addWidget(self.mpl_toolbar)
+        #vbox_canvas.addWidget(self.canvas)  # the matplotlib canvas
+        #vbox_canvas.addWidget(self.mpl_toolbar)
+        self.l = pg.GraphicsLayoutWidget(border=(100,100,100))
+        self.PowQ1 = self.l.addPlot(row=0, col=0, name='Pow')
+        self.PhaQ1 = self.l.addPlot(row=0, col=1, name='Pha')
+        #self.l.nextRow()
+        self.PowQ2 = self.l.addPlot(row=1, col=0, name='Pow')
+        self.PowQ2.setXLink(self.PowQ1)
+        self.PhaQ2 = self.l.addPlot(row=1, col=1, name='Pha')
+        self.PhaQ2.setXLink(self.PhaQ1)
+        #self.l.nextRow()
+        self.PowQ4 = self.l.addPlot(row=2, col=0, name='Pow')
+        self.PowQ4.setXLink(self.PowQ1)
+        self.PhaQ4 = self.l.addPlot(row=2, col=1, name='Pha')
+        self.PhaQ4.setXLink(self.PhaQ1)
+                
+        vbox_canvas.addWidget(self.l)
+
+
 
         hbox = QHBoxLayout()
-        hbox.addLayout(vbox_shots)
-        hbox.addLayout(vbox_canvas)
+        hbox.addLayout(vbox_shots, 1)
+        hbox.addLayout(vbox_canvas, 6)
+
 
         self.main_frame.setLayout(hbox)
         self.setCentralWidget(self.main_frame)
@@ -98,7 +123,8 @@ class AppForm(QMainWindow):
         '''Synchronize remote files to local directory'''
         self.remote_files = self.get_remote_file_list()
         io.copy_remote_files_to_local(self.remote_files,
-                                      local_data_path = 'data/Fast_Data/')
+                                      local_data_path = 'data/Fast_Data/',
+                                      remote_data_path='/media/ssd/Fast_Data')
         self.local_files = self.get_local_file_list()
             
     def update_shot_list(self):
@@ -111,40 +137,62 @@ class AppForm(QMainWindow):
     def refresh(self):
         self.sync_files() 
         self.update_shot_list()
-        self.update_plot()
-        
-    def on_shot_list_clicked(self, item):
-        '''Once a shot is selected, read the associated data and store them into the data dictionnary'''
-        selected_shot = item.text()
-
-        # get the associated shot files
-        shot_files = fast.get_shot_filenames(selected_shot)
     
+    def on_shot_list_clicked(self, item):
+        ''' Convert into DF when user select a shot number, essentially to speed-up the later plot'''
+        # Convert the shot item label into shot number
+        selected_shot = item.text()
+        try:
+            self.shot = int(selected_shot)
+            print('Shot #{}'.format(self.shot))
+        except ValueError:
+            print('Bad shot number ! Something went wrong somewhere !!')     
+     
+        # Then convert the data into DF
+        try:
+            self.convert_to_DF(self.shot)
+            print('Shot {} converted into DataFrame'.format(self.shot))
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+    
+    def convert_to_DF(self, shot):
+        ''' Convert a shot Fast Data into Pandas DataFrame '''
+        # convert only if not been made before
+        if not self.data.get(shot):
+            print('Converting data of shot #{}'.format(shot))
+            self.data[shot] = fast.FastData(shot)
         
-        self.data = dict()
-        
-        for file in shot_files:
-            if any([s in file for s in ['_0', '_1'] ]):
-                antenna = 'Q1'
-            if any([s in file for s in ['_2', '_3'] ]):
-                antenna = 'Q2'
-            if any([s in file for s in ['_4', '_5'] ]):
-                antenna = 'Q5'
-                
-            self.data[antenna] = dict()
-            if '7853' in file:
-                self.data[antenna]['amplitude'] = fast.read_fast_data_7853(file)
-            if '7851' in file:
-                self.data[antenna]['phase'] = fast.read_fast_data_7851(file) 
-                         
-        self.update_plot()
     
     def update_plot(self):
         self.fig.clear()
-        self.axes1 = self.fig.add_subplot(121) # amplitudes 
-        self.axes2 = self.fig.add_subplot(122) # phases
-        if self.data:
-            self.data['Q5']['phase'].plot(ax=self.axes1)
+        self.axes_PowQ1 = self.fig.add_subplot(231) # amplitudes
+        self.axes_PowQ2 = self.fig.add_subplot(232)
+        self.axes_PowQ4 = self.fig.add_subplot(233)
+        self.axes_PhaQ1 = self.fig.add_subplot(234) # amplitudes
+        self.axes_PhaQ2 = self.fig.add_subplot(235)
+        self.axes_PhaQ4 = self.fig.add_subplot(236)
+        try:
+            if  not self.data[self.shot].Q1_amplitude.empty:
+                self.PowQ1.plot(pen='b', x=self.data[self.shot].Q1_amplitude['PiG'].index/1e6, 
+                              y=self.data[self.shot].Q1_amplitude['PiG'].values)
+                self.PowQ1.plot(pen='r', x=self.data[self.shot].Q1_amplitude['PiD'].index/1e6, 
+                              y=self.data[self.shot].Q1_amplitude['PiD'].values)
+            if  not self.data[self.shot].Q2_amplitude.empty:
+                self.PowQ2.plot(pen='b', x=self.data[self.shot].Q2_amplitude['PiG'].index/1e6, 
+                              y=self.data[self.shot].Q2_amplitude['PiG'].values)
+                self.PowQ2.plot(pen='r', x=self.data[self.shot].Q2_amplitude['PiD'].index/1e6, 
+                              y=self.data[self.shot].Q2_amplitude['PiD'].values)
+            if  not self.data[self.shot].Q4_amplitude.empty:
+                self.PowQ4.plot(pen='b', x=self.data[self.shot].Q4_amplitude['PiG'].index/1e6, 
+                              y=self.data[self.shot].Q4_amplitude['PiG'].values)
+                self.PowQ4.plot(pen='r', x=self.data[self.shot].Q4_amplitude['PiD'].index/1e6, 
+                              y=self.data[self.shot].Q4_amplitude['PiD'].values)            
+            
+        except AttributeError as e:
+            print('No shot exist yet!')
+            print(e)
                                          
 #        self.axes3 = self.fig.add_subplot(223)
 #        self.axes4 = self.fig.add_subplot(224)

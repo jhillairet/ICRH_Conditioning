@@ -2,6 +2,8 @@ import sys
 import matplotlib
 from matplotlib.figure import Figure
 import ICRH_Conditioning as condi
+import ICRH_FileIO as io
+import os
 
 # Qt5/Qt4 compatibility
 try: 
@@ -101,14 +103,15 @@ class AppForm(QMainWindow):
         
     
     def get_local_file_list(self):
-        return condi.list_local_files()
+        return io.list_local_files(local_data_path = 'data/Cond_Data/')
     
     def get_remote_file_list(self):
-        return condi.list_remote_files()
+        return io.list_remote_files()
     
     def sync_files(self):
         self.remote_files = self.get_remote_file_list()
-        condi.copy_remote_files_to_local(self.remote_files)
+        io.copy_remote_files_to_local(self.remote_files,
+                                      local_data_path = 'data/Cond_Data/')
         self.local_files = self.get_local_file_list()
 
     def update_shot_table(self):
@@ -120,7 +123,8 @@ class AppForm(QMainWindow):
 
 
     def update_metadata_table(self, idx=-1):
-        self.metadata = condi.read_conditioning_metadata(self.local_files[idx])
+        self.metadata = condi.read_conditioning_metadata(
+            os.path.join('data', 'Cond_Data', self.local_files[idx]))
         # reduce the number of rows to the actual metadata number
         self.metadata_table.setRowCount(len(self.metadata))
 
@@ -139,15 +143,14 @@ class AppForm(QMainWindow):
         self.update_plot()
         
     def on_shot_table_clicked(self, row, col):
-        print("Click on " + str(row) + " " + str(col))
-        print(self.shot_table.item(row,col))
-        print('Plotting shot {}'.format(row))
         self.data = self.get_conditioning_data(row)
         self.metadata = self.update_metadata_table(row)
         self.update_plot()
         
     def get_conditioning_data(self, idx=-1):
-        self.data = condi.read_conditoning_data(self.local_files[idx])
+        print(self.local_files[idx])
+        self.data = condi.read_conditoning_data(
+                            os.path.join('data','Cond_Data', self.local_files[idx]))
         return self.data
     
     def update_plot(self):

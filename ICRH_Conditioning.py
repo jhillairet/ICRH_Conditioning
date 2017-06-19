@@ -6,61 +6,14 @@ Created on Mon Feb 27 13:19:21 2017
 
 Data files (.csv) are located on dfci:/media/ssd/Conditionnement/
 """
-import subprocess
-import os
-import glob
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
-def list_remote_files(remote_path='/media/ssd/Conditionnement/'):
-    """
-    Returns a list of the remote files (.csv) located in the remote acquisition computer.
-    """
-    ls = subprocess.Popen(['ssh', 'dfci@dfci', 'ls', remote_path ], 
-                          stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                          universal_newlines=True) # deals with Python3 string
-    out, err =  ls.communicate()
-    remote_file_list = out.split(sep='\n')
-    remote_file_list.pop() # The last one is a dummy ''
-    remote_file_list = sorted(remote_file_list, reverse=True) # Most recent first
-    return remote_file_list
-
-def list_local_files(local_data_path = 'data/'):
-    """ 
-    Returns the list of local files (.csv)
-    """
-    local_file_list = [os.path.basename(x) for x in glob.glob(local_data_path+'/*.csv')]    
-    # Sorted to most recent
-    local_file_list = sorted(local_file_list, reverse=True)
-    return local_file_list
-
-def copy_remote_files_to_local(remote_file_list, local_data_path = 'data/', 
-                               remote_data_path='/media/ssd/Conditionnement/', 
-                               nb_last_file_to_download=10):
-    """
-    Copy a list of remote files into the local directory, only if the files do
-    not exist locally.
-    Download only the last (most recent) nb_last_file_to_download files.
-    """
-    # List the files allready present in the local directory
-    local_file_list = list_local_files(local_data_path)
-    # Copy files through scp when the file does not exist locally
-    for file in remote_file_list[:nb_last_file_to_download]:
-        if file not in local_file_list:
-            print('Copying file {}'.format(os.path.join(remote_data_path, file)))
-            # Use call() instead of Popen() in order to block and not continue until end of copying
-            cp=subprocess.call(['scp', 'dfci@dfci:'+os.path.join(remote_data_path, file), local_data_path],
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                              universal_newlines=True)
-
-        
-        
 def read_conditoning_data(filename):
     """
     Import and return the ICRH Conditioning data into a pandas DataFrame
     """
-    data = pd.read_csv(os.path.join('data',filename), delimiter='\t', skiprows=18, 
+    data = pd.read_csv(filename, delimiter='\t', skiprows=18, 
                 names=('Temps',
                        'PiG','PrG','PiD','PrD',
                        'V1','V2','V3','V4', 
@@ -73,7 +26,7 @@ def read_conditioning_metadata(filename):
     Import and return the ICRH Conditioning metadata into a dictionary
     """
     para_dic = {}
-    with  open(os.path.join('data',filename),'r') as cmt_file:    # open file
+    with  open(filename,'r') as cmt_file:    # open file
         for line in cmt_file:    # read each line
             if line[0] == '#':    # check the first character
                 line = line[1:]    # remove first '#'
@@ -100,12 +53,13 @@ def plot_conditionning_data(data):
     plt.tight_layout()
 
 if __name__ == '__main__':
+    import ICRH_FileIO as io
     # Copy the recent data file into the local directory
-    remote_file_list = list_remote_files()
-    copy_remote_files_to_local(remote_file_list)
+    remote_file_list = io.list_remote_files()
+    io.copy_remote_files_to_local(remote_file_list)
     
     # Plot the last data file. 
-    local_file_list = list_local_files()
+    local_file_list = io.list_local_files()
     data = read_conditoning_data(local_file_list[-1])
     plot_conditionning_data(data)
 
