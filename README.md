@@ -17,17 +17,20 @@ The key fingerprint is:
 c9:d7:c6:ad:6e:23:0a:cd:1e:66:77:8e:b2:66:f2:2e JH218595@nunki.intra.cea.fr
 ```
 
-* Step 2: login on the remote computer (dfci) and add your public rsa key (located in the file described above) to the file authorized_keys located in ~/.ssh/
+* Step 2: use ssh_copy-id to add on the remote computer (dfci) your public rsa key to the file authorized_keys located in ~/.ssh/. 
 
+Example:
 ```
-$ ssh -X dfci@dfci
-dfci@dfci's password:
-Last login: Mon Feb 27 15:30:29 2017 from nunki.intra.cea.fr
-[dfci@pc-dfci ~]$ cd
-[dfci@pc-dfci ~]$ gedit .ssh/authorized_keys &
+cd ~/.ssh/
+ssh-copy-id -i id_rsa.pub dfci@dfci
 ```
+
+NB : the home (~) directory should be set to 755 permission, otherwise SSH will keep asking for a password (cf. https://unix.stackexchange.com/questions/292168/scp-command-keeps-asking-password) 
+
 
 * Step 3: Test if the SSH copy works without requiring password on your local computer: 
+
+Example:
 
 ```
 scp dfci@dfci:/media/ssd/Conditionnement/2017-02-27_14-42-12.csv .
