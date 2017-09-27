@@ -13,12 +13,15 @@ def read_conditoning_data(filename):
     """
     Import and return the ICRH Conditioning data into a pandas DataFrame
     """
+
     data = pd.read_csv(filename, delimiter='\t', skiprows=18, 
                 names=('Temps',
                        'PiG','PrG','PiD','PrD',
                        'V1','V2','V3','V4', 
-                       'Ph(V1-V3)','Ph(V2-V4)','Ph(Pig-Pid)', 'bidon'),
-                index_col='Temps')
+                       'Ph(V1-V3)','Ph(V2-V4)',
+                       'Consigne_mes', 'Vide_gauche', 'Vide_droit',
+                       'reserve1', 'reserve2', '_'),
+                index_col='Temps') # last element '_' to avoid pandas crashing
     return data 
 
 def read_conditioning_metadata(filename):

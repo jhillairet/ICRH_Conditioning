@@ -2,3 +2,5 @@ __pycache__/
 *.csv
 data/
 .ipynb_checkpoints/
+# Compiled python modules.
+*.pyc
