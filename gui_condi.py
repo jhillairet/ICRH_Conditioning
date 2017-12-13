@@ -55,8 +55,8 @@ class AppForm(QMainWindow):
         self.PD = self.l.addPlot(row=0, col=1, title='Pi,Pr Droite')
         self.PhG = self.l.addPlot(row=1, col=0, title='Phase V1-V3 Gauche')
         self.PhD = self.l.addPlot(row=1, col=1, title='Phase V2-V4 Droite')
-        self.VG = self.l.addPlot(row=2, col=0, title='Tensions V1,V3 Gauche')
-        self.VD = self.l.addPlot(row=2, col=1, title='Tensions V2,V4 Droite')
+        self.VG = self.l.addPlot(row=2, col=0, title='Tensions V1,V2 Gauche')
+        self.VD = self.l.addPlot(row=2, col=1, title='Tensions V3,V4 Droite')
         self.pTransG = self.l.addPlot(row=3, col=0, title='Pression Gauche')
         self.pTransD = self.l.addPlot(row=3, col=1, title='Pression Droit')
         # Connect Y axis on left and right subplots
@@ -210,14 +210,14 @@ class AppForm(QMainWindow):
                          clear=True, name='V1',
                          x=time, y=data.V1.values/1000) # kV
             self.VG.plot(pen=pg.mkPen('r', width=2), 
-                         clear=False, name='V3',
-                         x=time, y=data.V3.values/1000) # kV
+                         clear=False, name='V2',
+                         x=time, y=data.V2.values/1000) # kV
             self.VG.setLabel('left','Probe Voltage', units='V')
             
             # Tensions Droite
             self.VD.plot(pen=pg.mkPen('b', width=2), 
-                         clear=True, name='V2', 
-                         x=time, y=data.V2.values/1000) # kV
+                         clear=True, name='V3', 
+                         x=time, y=data.V3.values/1000) # kV
             self.VD.plot(pen=pg.mkPen('r', width=2), 
                          clear=False, name='V4',
                          x=time, y=data.V4.values/1000) # kV
