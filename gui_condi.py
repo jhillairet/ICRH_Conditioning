@@ -1,5 +1,6 @@
 import sys
 import os
+import numpy as np
 
 # Qt5/Qt4 compatibility
 try:
@@ -42,7 +43,7 @@ class AppForm(QMainWindow):
         # fill the shot table with the date of the last shots
         self.update_shot_table()
         # default plotted data are from last shot file
-        self.data = self.get_conditioning_data(-1)
+        self.data = self.get_conditioning_data(0)
         self.update_metadata_table()
         self.update_plot()
 
@@ -50,15 +51,29 @@ class AppForm(QMainWindow):
         self.main_frame = QWidget()
         # pyqtgraph Figures
         self.l = pg.GraphicsLayoutWidget(border=(100, 100, 100))
-        self.PG = self.l.addPlot(row=0, col=0, name='Pi,Pr Gauche')
-        self.PD = self.l.addPlot(row=0, col=1, name='Pi,Pr Droite')
-        self.PhG = self.l.addPlot(row=1, col=0, name='Phase V1-V3 Gauche')
-        self.PhD = self.l.addPlot(row=1, col=1, name='Phase V2-V4 Droite')
-        self.VG = self.l.addPlot(row=2, col=0, name='Tensions V1,V3 Gauche')
-        self.VD = self.l.addPlot(row=2, col=1, name='Tensions V2,V4 Droite')
-        self.pTransG = self.l.addPlot(row=3, col=0, name='Pression Gauche')
-        self.pTransD = self.l.addPlot(row=3, col=1, name='Pression Droit')
+        self.PG = self.l.addPlot(row=0, col=0, title='Pi,Pr Gauche')
+        self.PD = self.l.addPlot(row=0, col=1, title='Pi,Pr Droite')
+        self.PhG = self.l.addPlot(row=1, col=0, title='Phase V1-V3 Gauche')
+        self.PhD = self.l.addPlot(row=1, col=1, title='Phase V2-V4 Droite')
+        self.VG = self.l.addPlot(row=2, col=0, title='Tensions V1,V3 Gauche')
+        self.VD = self.l.addPlot(row=2, col=1, title='Tensions V2,V4 Droite')
+        self.pTransG = self.l.addPlot(row=3, col=0, title='Pression Gauche')
+        self.pTransD = self.l.addPlot(row=3, col=1, title='Pression Droit')
+        # Connect Y axis on left and right subplots
+        self.PhG.setXLink(self.PG)
+        self.VG.setXLink(self.PG)
+        self.pTransG.setXLink(self.PG)
         
+        self.PhD.setXLink(self.PD)
+        self.VD.setXLink(self.PD)
+        self.pTransD.setXLink(self.PD)
+        
+#        # add legends
+#        self.PG.addLegend()
+#        self.PD.addLegend()
+#        self.VG.addLegend()
+#        self.VD.addLegend()
+                    
         # Default Fonts
         button_default_font = QtGui.QFont('SansSerif', 16)
         item_default_font = QtGui.QFont('SansSerif', 12)
@@ -135,8 +150,8 @@ class AppForm(QMainWindow):
         # select the first row (most recent) and display its associated data
         self.shot_table.selectRow(0)
         self.update_shot_table()
-        self.data = self.get_conditioning_data(-1)
-        self.update_metadata_table(-1)
+        self.data = self.get_conditioning_data(0)
+        self.update_metadata_table(0)
         self.update_plot()
 
     def on_shot_table_clicked(self, row, col):
@@ -157,27 +172,68 @@ class AppForm(QMainWindow):
         else:
             # NB: pandas -> np arrays for pyqtgraph compatibility
             time = data.index.values/1e3  # display time in ms
+            
             # Pi,Pr Gauche
-            self.PG.plot(pen='b', x=time, y=data.PiG.values/10, clear=True)
-            self.PG.plot(pen='r', x=time, y=data.PrG.values/10, clear=True)
+            self.PG.plot(pen=pg.mkPen('k', width=2, style=QtCore.Qt.DashLine),
+                         clear=True, name='Consigne',
+                         x=time, y=data.Consigne_mes.values/2) # kW
+            self.PG.plot(pen=pg.mkPen('b', width=2), clear=False, name='Pi_G',
+                         x=time, y=data.PiG.values/10) # kW
+            self.PG.plot(pen=pg.mkPen('r', width=2), clear=False, name='Pr_G',
+                         x=time, y=data.PrG.values/10) # kW
+            self.PG.setLabel('left', 'Power', units='kW')
+            
             # Pi,Pr Droite
-            self.PD.plot(pen='b', x=time, y=data.PiD.values/10, clear=True)
-            self.PD.plot(pen='r', x=time, y=data.PrD.values/10, clear=True)
+            self.PD.plot(pen=pg.mkPen('k', width=2, style=QtCore.Qt.DashLine),
+                         clear=True, name='Consigne',
+                         x=time, y=data.Consigne_mes.values/2) # k
+            self.PD.plot(pen=pg.mkPen('b', width=2), 
+                         clear=False, name='Pi_D',
+                         x=time, y=data.PiD.values/10) # kW
+            self.PD.plot(pen=pg.mkPen('r', width=2), 
+                         clear=False, name='Pr_D',
+                         x=time, y=data.PrD.values/10) # kW
+            self.PD.setLabel('left', 'Power', units='kW')
+            
             # Phase Gauche
-            self.PhG.plot(pen='b', x=time, y=data['Ph(V1-V3)'].values, clear=True)
-            self.PhG.autoRange()
+            self.PhG.plot(pen='b', clear=True, 
+                          x=time, y=data['Ph(V1-V3)'].values/100) # degres
+            self.PhG.setLabel('left', 'Phase [left]', units='deg')
+            
             # Phase Droite
-            self.PhD.plot(pen='b', x=time, y=data['Ph(V2-V4)'].values, clear=True)
+            self.PhD.plot(pen='b', clear=True, 
+                          x=time, y=data['Ph(V2-V4)'].values/100) # degres
+            self.PhD.setLabel('left', 'Phase [right]', units='deg')
+            
             # Tensions Gauche
-            self.VG.plot(pen='b', x=time, y=data.V1.values, clear=True)
-            self.VG.plot(pen='r', x=time, y=data.V3.values, clear=True)
+            self.VG.plot(pen=pg.mkPen('b', width=2), 
+                         clear=True, name='V1',
+                         x=time, y=data.V1.values/1000) # kV
+            self.VG.plot(pen=pg.mkPen('r', width=2), 
+                         clear=False, name='V3',
+                         x=time, y=data.V3.values/1000) # kV
+            self.VG.setLabel('left','Probe Voltage', units='V')
+            
             # Tensions Droite
-            self.VD.plot(pen='b', x=time, y=data.V2.values, clear=True)
-            self.VD.plot(pen='r', x=time, y=data.V4.values, clear=True)
+            self.VD.plot(pen=pg.mkPen('b', width=2), 
+                         clear=True, name='V2', 
+                         x=time, y=data.V2.values/1000) # kV
+            self.VD.plot(pen=pg.mkPen('r', width=2), 
+                         clear=False, name='V4',
+                         x=time, y=data.V4.values/1000) # kV
+            self.VD.setLabel('left','Probe Voltage', units='V')
+            
             # Pression dans le transfo gauche et droit
-            self.pTransG.plot(pen='b', x=time, y=data.Vide_gauche.values, clear=True)
-            self.pTransD.plot(pen='b', x=time, y=data.Vide_droit.values, clear=True)
-
+            self.pTransG.plot(pen='b', x=time, y=np.power(10, 1.667*data.Vide_gauche.values*1e-3-9.33), clear=True)
+            self.pTransG.setLogMode(y=True)
+            self.pTransG.showGrid(y=True)
+            self.pTransG.setLabel('bottom','time', units='ms')
+            self.pTransG.setLabel('left', 'Pressure [left]', units='Pa')
+            self.pTransD.plot(pen='b', x=time, y=np.power(10, 1.667*data.Vide_droit.values*1e-3-9.33), clear=True)
+            self.pTransD.setLogMode(y=True)
+            self.pTransD.showGrid(y=True)
+            self.pTransD.setLabel('bottom','time', units='ms')
+            self.pTransD.setLabel('left', 'Pressure [right]', units='Pa')
 
 def main():
     # Hack to be able to run the code from spyder

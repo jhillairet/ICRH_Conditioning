@@ -59,10 +59,10 @@ if __name__ == '__main__':
     import ICRH_FileIO as io
     # Copy the recent data file into the local directory
     remote_file_list = io.list_remote_files()
-    io.copy_remote_files_to_local(remote_file_list)
+    io.copy_remote_files_to_local(remote_file_list, local_data_path = 'data/Cond_Data')
     
     # Plot the last data file. 
-    local_file_list = io.list_local_files()
+    local_file_list = io.list_local_files(local_data_path = 'data/Cond_Data')
     data = read_conditoning_data(local_file_list[-1])
     plot_conditionning_data(data)
 
