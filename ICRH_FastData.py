@@ -103,7 +103,7 @@ if __name__ == '__main__':
                                   nb_last_file_to_download=50)
     
     # Plot the last data file. 
-    #local_file_list = io.list_local_files()
+    local_file_list = io.list_local_files()
 
 
 

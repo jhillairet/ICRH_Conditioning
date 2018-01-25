@@ -71,17 +71,17 @@ class AppForm(QMainWindow):
         vbox_shots.addWidget(self.plot_button)
         
         self.l = pg.GraphicsLayoutWidget(border=(100,100,100))
-        self.PowQ1 = self.l.addPlot(row=0, col=0, name='Pow')
-        self.PhaQ1 = self.l.addPlot(row=0, col=1, name='Pha')
+        self.PowQ1 = self.l.addPlot(row=0, col=0, name='Pow', title='Q1 Power')
+        self.PhaQ1 = self.l.addPlot(row=0, col=1, name='Pha', title='Q1 Phase')
         #self.l.nextRow()
-        self.PowQ2 = self.l.addPlot(row=1, col=0, name='Pow')
+        self.PowQ2 = self.l.addPlot(row=1, col=0, name='Pow', title='Q2 Power')
         self.PowQ2.setXLink(self.PowQ1)
-        self.PhaQ2 = self.l.addPlot(row=1, col=1, name='Pha')
+        self.PhaQ2 = self.l.addPlot(row=1, col=1, name='Pha', title='Q2 Phase')
         self.PhaQ2.setXLink(self.PhaQ1)
         #self.l.nextRow()
-        self.PowQ4 = self.l.addPlot(row=2, col=0, name='Pow')
+        self.PowQ4 = self.l.addPlot(row=2, col=0, name='Pow', title='Q4 Power')
         self.PowQ4.setXLink(self.PowQ1)
-        self.PhaQ4 = self.l.addPlot(row=2, col=1, name='Pha')
+        self.PhaQ4 = self.l.addPlot(row=2, col=1, name='Pha', title='Q4 Phase')
         self.PhaQ4.setXLink(self.PhaQ1)
 
         vbox_canvas = QVBoxLayout()                
@@ -132,7 +132,8 @@ class AppForm(QMainWindow):
         # Then convert the data into DF
         try:
             self.convert_to_DF(self.shot)
-            print('Shot {} converted into DataFrame'.format(self.shot))
+            print(f'Shot {self.shot} converted into DataFrame')
+            
         except Exception as ex:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -142,7 +143,7 @@ class AppForm(QMainWindow):
         ''' Convert a shot Fast Data into Pandas DataFrame '''
         # convert only if not been made before
         if not self.data.get(shot):
-            print('Converting data of shot #{}'.format(shot))
+            print(f'Converting data of shot {shot}')
             self.data[shot] = fast.FastData(shot)
 
     def update_plot(self):
@@ -152,21 +153,40 @@ class AppForm(QMainWindow):
                               y=self.data[self.shot].Q1_amplitude['PiG'].values)
                 self.PowQ1.plot(pen='r', x=self.data[self.shot].Q1_amplitude['PiD'].index/1e6, 
                               y=self.data[self.shot].Q1_amplitude['PiD'].values)
+            if  not self.data[self.shot].Q1_phase.empty:               
+                self.PhaQ1.plot(pen='b', x=self.data[self.shot].Q1_phase['Ph1'].index, 
+                              y=self.data[self.shot].Q1_phase['Ph1'].values)
+                self.PhaQ1.plot(pen='r', x=self.data[self.shot].Q1_phase['Ph2'].index, 
+                              y=self.data[self.shot].Q1_phase['Ph2'].values)
+                # to be continued
+                
             if  not self.data[self.shot].Q2_amplitude.empty:
                 self.PowQ2.plot(pen='b', x=self.data[self.shot].Q2_amplitude['PiG'].index/1e6, 
                               y=self.data[self.shot].Q2_amplitude['PiG'].values)
                 self.PowQ2.plot(pen='r', x=self.data[self.shot].Q2_amplitude['PiD'].index/1e6, 
                               y=self.data[self.shot].Q2_amplitude['PiD'].values)
+            if  not self.data[self.shot].Q2_phase.empty:               
+                self.PhaQ2.plot(pen='b', x=self.data[self.shot].Q2_phase['Ph1'].index, 
+                              y=self.data[self.shot].Q2_phase['Ph1'].values)
+                self.PhaQ2.plot(pen='r', x=self.data[self.shot].Q2_phase['Ph2'].index, 
+                              y=self.data[self.shot].Q2_phase['Ph2'].values)
+                # to be continued
+                
             if  not self.data[self.shot].Q4_amplitude.empty:
                 self.PowQ4.plot(pen='b', x=self.data[self.shot].Q4_amplitude['PiG'].index/1e6, 
                               y=self.data[self.shot].Q4_amplitude['PiG'].values)
                 self.PowQ4.plot(pen='r', x=self.data[self.shot].Q4_amplitude['PiD'].index/1e6, 
                               y=self.data[self.shot].Q4_amplitude['PiD'].values)            
-            
+            if  not self.data[self.shot].Q4_phase.empty:               
+                self.PhaQ4.plot(pen='b', x=self.data[self.shot].Q4_phase['Ph1'].index, 
+                              y=self.data[self.shot].Q4_phase['Ph1'].values)
+                self.PhaQ4.plot(pen='r', x=self.data[self.shot].Q4_phase['Ph2'].index, 
+                              y=self.data[self.shot].Q4_phase['Ph2'].values)
+                # to be continued
+                
         except AttributeError as e:
-            print('No shot exist yet!')
+            print('No data in the shot!')
             print(e)
-
 
 def main():
     # Hack to be able to run the code from spyder
