@@ -94,13 +94,12 @@ class FastData():
 if __name__ == '__main__':
     # Copy the recent data file into the local directory
     remote_files = io.list_remote_files(remote_path='/media/ssd/Fast_Data/')
-    
     #files_to_copy = filter_by_shot(all_fast_data_remote_files, 50)
     
     io.copy_remote_files_to_local(remote_files, 
                                   local_data_path='data/Fast_Data', 
                                   remote_data_path='/media/ssd/Fast_Data/', 
-                                  nb_last_file_to_download=50)
+                                  nb_last_file_to_download=500000)
     
     # Plot the last data file. 
     local_file_list = io.list_local_files()
