@@ -150,36 +150,36 @@ class AppForm(QMainWindow):
         try:
             if  not self.data[self.shot].Q1_amplitude.empty:
                 self.PowQ1.plot(pen='b', x=self.data[self.shot].Q1_amplitude['PiG'].index/1e6, 
-                              y=self.data[self.shot].Q1_amplitude['PiG'].values)
+                              y=self.data[self.shot].Q1_amplitude['PiG'].values, clear=True)
                 self.PowQ1.plot(pen='r', x=self.data[self.shot].Q1_amplitude['PiD'].index/1e6, 
                               y=self.data[self.shot].Q1_amplitude['PiD'].values)
             if  not self.data[self.shot].Q1_phase.empty:               
                 self.PhaQ1.plot(pen='b', x=self.data[self.shot].Q1_phase['Ph1'].index, 
-                              y=self.data[self.shot].Q1_phase['Ph1'].values)
+                              y=self.data[self.shot].Q1_phase['Ph1'].values, clear=True)
                 self.PhaQ1.plot(pen='r', x=self.data[self.shot].Q1_phase['Ph2'].index, 
                               y=self.data[self.shot].Q1_phase['Ph2'].values)
                 # to be continued
                 
             if  not self.data[self.shot].Q2_amplitude.empty:
                 self.PowQ2.plot(pen='b', x=self.data[self.shot].Q2_amplitude['PiG'].index/1e6, 
-                              y=self.data[self.shot].Q2_amplitude['PiG'].values)
+                              y=self.data[self.shot].Q2_amplitude['PiG'].values, clear=True)
                 self.PowQ2.plot(pen='r', x=self.data[self.shot].Q2_amplitude['PiD'].index/1e6, 
                               y=self.data[self.shot].Q2_amplitude['PiD'].values)
             if  not self.data[self.shot].Q2_phase.empty:               
                 self.PhaQ2.plot(pen='b', x=self.data[self.shot].Q2_phase['Ph1'].index, 
-                              y=self.data[self.shot].Q2_phase['Ph1'].values)
+                              y=self.data[self.shot].Q2_phase['Ph1'].values, clear=True)
                 self.PhaQ2.plot(pen='r', x=self.data[self.shot].Q2_phase['Ph2'].index, 
                               y=self.data[self.shot].Q2_phase['Ph2'].values)
                 # to be continued
                 
             if  not self.data[self.shot].Q4_amplitude.empty:
                 self.PowQ4.plot(pen='b', x=self.data[self.shot].Q4_amplitude['PiG'].index/1e6, 
-                              y=self.data[self.shot].Q4_amplitude['PiG'].values)
+                              y=self.data[self.shot].Q4_amplitude['PiG'].values, clear=True)
                 self.PowQ4.plot(pen='r', x=self.data[self.shot].Q4_amplitude['PiD'].index/1e6, 
                               y=self.data[self.shot].Q4_amplitude['PiD'].values)            
             if  not self.data[self.shot].Q4_phase.empty:               
                 self.PhaQ4.plot(pen='b', x=self.data[self.shot].Q4_phase['Ph1'].index, 
-                              y=self.data[self.shot].Q4_phase['Ph1'].values)
+                              y=self.data[self.shot].Q4_phase['Ph1'].values, clear=True)
                 self.PhaQ4.plot(pen='r', x=self.data[self.shot].Q4_phase['Ph2'].index, 
                               y=self.data[self.shot].Q4_phase['Ph2'].values)
                 # to be continued
