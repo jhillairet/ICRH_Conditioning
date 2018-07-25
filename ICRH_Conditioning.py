@@ -22,6 +22,11 @@ def read_conditoning_data(filename):
                        'Consigne_mes', 'Vide_gauche', 'Vide_droit',
                        'reserve1', 'reserve2', '_'),
                 index_col='Temps') # last element '_' to avoid pandas crashing
+    # convert phase in degree and wrap it between 0° and 359°
+    data['Ph(V1-V3)'] /= 100
+    data['Ph(V2-V4)'] /= 100
+    data['Ph(V1-V3)'] %= 360
+    data['Ph(V2-V4)'] %= 360
     return data 
 
 def read_conditioning_metadata(filename):

@@ -197,12 +197,12 @@ class AppForm(QMainWindow):
             
             # Phase Gauche
             self.PhG.plot(pen='b', clear=True, 
-                          x=time, y=data['Ph(V1-V3)'].values/100) # degres
+                          x=time, y=data['Ph(V1-V3)'].values) # degres
             self.PhG.setLabel('left', 'Phase [left]', units='deg')
             
             # Phase Droite
             self.PhD.plot(pen='b', clear=True, 
-                          x=time, y=data['Ph(V2-V4)'].values/100) # degres
+                          x=time, y=data['Ph(V2-V4)'].values) # degres
             self.PhD.setLabel('left', 'Phase [right]', units='deg')
             
             # Tensions Gauche
@@ -224,12 +224,12 @@ class AppForm(QMainWindow):
             self.VD.setLabel('left','Probe Voltage', units='V')
             
             # Pression dans le transfo gauche et droit
-            self.pTransG.plot(pen='b', x=time, y=np.power(10, 1.667*data.Vide_gauche.values*1e-3-9.33), clear=True)
+            self.pTransG.plot(pen='b', x=time, y=np.power(10, 1.5*data.Vide_gauche.values*1e-3-10), clear=True)
             self.pTransG.setLogMode(y=True)
             self.pTransG.showGrid(y=True)
             self.pTransG.setLabel('bottom','time', units='ms')
             self.pTransG.setLabel('left', 'Pressure [left]', units='Pa')
-            self.pTransD.plot(pen='b', x=time, y=np.power(10, 1.667*data.Vide_droit.values*1e-3-9.33), clear=True)
+            self.pTransD.plot(pen='b', x=time, y=np.power(10, 1.5*data.Vide_droit.values*1e-3-10), clear=True)
             self.pTransD.setLogMode(y=True)
             self.pTransD.showGrid(y=True)
             self.pTransD.setLabel('bottom','time', units='ms')
