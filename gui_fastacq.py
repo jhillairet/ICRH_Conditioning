@@ -33,7 +33,7 @@ class AppForm(QMainWindow):
     def __init__(self, parent=None):
         QMainWindow.__init__(self, parent)        
         self.create_main_frame()
-        self.setGeometry(0, 0, 1600, 600)
+        self.setGeometry(0, 0, 2000, 600)
         self.setWindowTitle("WEST ICRH Fast Data Acquisition Analysis")
         # Fast data dictionnary
         self.data = dict()
@@ -59,7 +59,7 @@ class AppForm(QMainWindow):
         self.plot_button.setFont(button_default_font)
         self.plot_button.clicked.connect(self.update_plot)                                   
 
-        # Conditioning Shots List
+        # Shots List
         self.shot_list_widget = QListWidget()
         self.shot_list_widget.setFont(item_default_font)
         self.shot_list_widget.itemClicked.connect(self.on_shot_list_clicked)
@@ -71,25 +71,34 @@ class AppForm(QMainWindow):
         vbox_shots.addWidget(self.plot_button)
         
         self.l = pg.GraphicsLayoutWidget(border=(100,100,100))
-        self.PowQ1 = self.l.addPlot(row=0, col=0, name='Pow', title='Q1 Power')
-        self.PhaQ1 = self.l.addPlot(row=0, col=1, name='Pha', title='Q1 Phase')
-        #self.l.nextRow()
-        self.PowQ2 = self.l.addPlot(row=1, col=0, name='Pow', title='Q2 Power')
-        self.PowQ2.setXLink(self.PowQ1)
-        self.PhaQ2 = self.l.addPlot(row=1, col=1, name='Pha', title='Q2 Phase')
-        self.PhaQ2.setXLink(self.PhaQ1)
-        #self.l.nextRow()
-        self.PowQ4 = self.l.addPlot(row=2, col=0, name='Pow', title='Q4 Power')
-        self.PowQ4.setXLink(self.PowQ1)
-        self.PhaQ4 = self.l.addPlot(row=2, col=1, name='Pha', title='Q4 Phase')
-        self.PhaQ4.setXLink(self.PhaQ1)
+        # 1st row : RF power
+        self.PowQ1 = self.l.addPlot(row=0, col=0, name='Pow', title='Q1 Power (PiG, PrG, PiD, PrD)')
+        self.PowQ2 = self.l.addPlot(row=0, col=1, name='Pow', title='Q2 Power (PiG, PrG, PiD, PrD)')        
+        self.PowQ4 = self.l.addPlot(row=0, col=2, name='Pow', title='Q4 Power (PiG, PrG, PiD, PrD)')
+        
+        # 2nd row : RF voltages
+        self.VolQ1 = self.l.addPlot(row=1, col=0, name='Vol', title='Q1 Voltages (V1, V2, V3, V4)')        
+        self.VolQ2 = self.l.addPlot(row=1, col=1, name='Vol', title='Q2 Voltages (V1, V2, V3, V4)') 
+        self.VolQ4 = self.l.addPlot(row=1, col=2, name='Vol', title='Q4 Voltages (V1, V2, V3, V4)')
+        self.VolQ1.setXLink(self.PowQ1)
+        self.VolQ2.setXLink(self.PowQ2)
+        self.VolQ4.setXLink(self.PowQ4)   
+        
+        # 3rd row : RF phase
+        self.PhaQ1 = self.l.addPlot(row=2, col=0, name='Pha', title='Q1 Phase (Ph1-Ph3, Ph2-Ph4)')
+        self.PhaQ2 = self.l.addPlot(row=2, col=1, name='Pha', title='Q2 Phase (Ph1-Ph3, Ph2-Ph4)')
+        self.PhaQ4 = self.l.addPlot(row=2, col=2, name='Pha', title='Q4 Phase (Ph1-Ph3, Ph2-Ph4)')
+        self.PhaQ1.setXLink(self.PowQ1)
+        self.PhaQ2.setXLink(self.PowQ2)
+        self.PhaQ4.setXLink(self.PowQ4)        
 
+        #self.l.nextRow()
         vbox_canvas = QVBoxLayout()                
         vbox_canvas.addWidget(self.l)
 
         hbox = QHBoxLayout()
         hbox.addLayout(vbox_shots, 1)
-        hbox.addLayout(vbox_canvas, 6)
+        hbox.addLayout(vbox_canvas, 15)
 
         self.main_frame.setLayout(hbox)
         self.setCentralWidget(self.main_frame)
@@ -147,42 +156,91 @@ class AppForm(QMainWindow):
             self.data[shot] = fast.FastData(shot)
 
     def update_plot(self):
+        # Update the graph with the data. 
+        # Check first if the data are not empty before plotting
         try:
-            if  not self.data[self.shot].Q1_amplitude.empty:
+            # Q1
+            if not self.data[self.shot].Q1_amplitude.empty:
                 self.PowQ1.plot(pen='b', x=self.data[self.shot].Q1_amplitude['PiG'].index/1e6, 
                               y=self.data[self.shot].Q1_amplitude['PiG'].values, clear=True)
-                self.PowQ1.plot(pen='r', x=self.data[self.shot].Q1_amplitude['PiD'].index/1e6, 
+                self.PowQ1.plot(pen='r', x=self.data[self.shot].Q1_amplitude['PrG'].index/1e6, 
+                              y=self.data[self.shot].Q1_amplitude['PrG'].values)
+                self.PowQ1.plot(pen='g', x=self.data[self.shot].Q1_amplitude['PiD'].index/1e6, 
                               y=self.data[self.shot].Q1_amplitude['PiD'].values)
-            if  not self.data[self.shot].Q1_phase.empty:               
-                self.PhaQ1.plot(pen='b', x=self.data[self.shot].Q1_phase['Ph1'].index, 
-                              y=self.data[self.shot].Q1_phase['Ph1'].values, clear=True)
-                self.PhaQ1.plot(pen='r', x=self.data[self.shot].Q1_phase['Ph2'].index, 
-                              y=self.data[self.shot].Q1_phase['Ph2'].values)
-                # to be continued
+                self.PowQ1.plot(pen='m', x=self.data[self.shot].Q1_amplitude['PrD'].index/1e6, 
+                              y=self.data[self.shot].Q1_amplitude['PrD'].values)
                 
-            if  not self.data[self.shot].Q2_amplitude.empty:
+                self.VolQ1.plot(pen='b', x=self.data[self.shot].Q1_amplitude['V1'].index/1e6,
+                               y=self.data[self.shot].Q1_amplitude['V1'].values/10, clear=True)
+                self.VolQ1.plot(pen='r', x=self.data[self.shot].Q1_amplitude['V2'].index/1e6,
+                               y=self.data[self.shot].Q1_amplitude['V2'].values/10)
+                self.VolQ1.plot(pen='g', x=self.data[self.shot].Q1_amplitude['V3'].index/1e6,
+                               y=self.data[self.shot].Q1_amplitude['V3'].values/10)
+                self.VolQ1.plot(pen='m', x=self.data[self.shot].Q1_amplitude['V4'].index/1e6,
+                               y=self.data[self.shot].Q1_amplitude['V4'].values/10)
+
+            if not self.data[self.shot].Q1_phase.empty:               
+                self.PhaQ1.plot(pen='b', x=self.data[self.shot].Q1_phase['Ph1'].index/1e6, 
+                              y=(self.data[self.shot].Q1_phase['Ph1'].values/100 -
+                                 self.data[self.shot].Q1_phase['Ph3'].values/100) % 360, clear=True)
+                self.PhaQ1.plot(pen='r', x=self.data[self.shot].Q1_phase['Ph2'].index/1e6, 
+                              y=(self.data[self.shot].Q1_phase['Ph2'].values/100 - 
+                                 self.data[self.shot].Q1_phase['Ph4'].values/100) % 360)
+
+            # Q2 
+            if not self.data[self.shot].Q2_amplitude.empty:
                 self.PowQ2.plot(pen='b', x=self.data[self.shot].Q2_amplitude['PiG'].index/1e6, 
                               y=self.data[self.shot].Q2_amplitude['PiG'].values, clear=True)
-                self.PowQ2.plot(pen='r', x=self.data[self.shot].Q2_amplitude['PiD'].index/1e6, 
+                self.PowQ2.plot(pen='r', x=self.data[self.shot].Q2_amplitude['PrG'].index/1e6, 
+                              y=self.data[self.shot].Q2_amplitude['PrG'].values)
+                self.PowQ2.plot(pen='g', x=self.data[self.shot].Q2_amplitude['PiD'].index/1e6, 
                               y=self.data[self.shot].Q2_amplitude['PiD'].values)
-            if  not self.data[self.shot].Q2_phase.empty:               
-                self.PhaQ2.plot(pen='b', x=self.data[self.shot].Q2_phase['Ph1'].index, 
-                              y=self.data[self.shot].Q2_phase['Ph1'].values, clear=True)
-                self.PhaQ2.plot(pen='r', x=self.data[self.shot].Q2_phase['Ph2'].index, 
-                              y=self.data[self.shot].Q2_phase['Ph2'].values)
-                # to be continued
+                self.PowQ2.plot(pen='m', x=self.data[self.shot].Q2_amplitude['PrD'].index/1e6, 
+                              y=self.data[self.shot].Q2_amplitude['PrD'].values)
                 
-            if  not self.data[self.shot].Q4_amplitude.empty:
+                self.VolQ2.plot(pen='b', x=self.data[self.shot].Q2_amplitude['V1'].index/1e6,
+                               y=self.data[self.shot].Q2_amplitude['V1'].values/10, clear=True)
+                self.VolQ2.plot(pen='r', x=self.data[self.shot].Q2_amplitude['V2'].index/1e6,
+                               y=self.data[self.shot].Q2_amplitude['V2'].values/10)
+                self.VolQ2.plot(pen='g', x=self.data[self.shot].Q2_amplitude['V3'].index/1e6,
+                               y=self.data[self.shot].Q2_amplitude['V3'].values/10)
+                self.VolQ2.plot(pen='m', x=self.data[self.shot].Q2_amplitude['V4'].index/1e6,
+                               y=self.data[self.shot].Q2_amplitude['V4'].values/10)
+
+            if not self.data[self.shot].Q2_phase.empty:               
+                self.PhaQ2.plot(pen='b', x=self.data[self.shot].Q2_phase['Ph1'].index/1e6, 
+                              y=(self.data[self.shot].Q2_phase['Ph1'].values/100 -
+                                 self.data[self.shot].Q2_phase['Ph3'].values/100) % 360, clear=True)
+                self.PhaQ2.plot(pen='r', x=self.data[self.shot].Q2_phase['Ph2'].index/1e6, 
+                              y=(self.data[self.shot].Q2_phase['Ph2'].values/100 - 
+                                 self.data[self.shot].Q2_phase['Ph4'].values/100) % 360)
+
+            # Q4
+            if not self.data[self.shot].Q4_amplitude.empty:
                 self.PowQ4.plot(pen='b', x=self.data[self.shot].Q4_amplitude['PiG'].index/1e6, 
                               y=self.data[self.shot].Q4_amplitude['PiG'].values, clear=True)
-                self.PowQ4.plot(pen='r', x=self.data[self.shot].Q4_amplitude['PiD'].index/1e6, 
-                              y=self.data[self.shot].Q4_amplitude['PiD'].values)            
-            if  not self.data[self.shot].Q4_phase.empty:               
-                self.PhaQ4.plot(pen='b', x=self.data[self.shot].Q4_phase['Ph1'].index, 
-                              y=self.data[self.shot].Q4_phase['Ph1'].values, clear=True)
-                self.PhaQ4.plot(pen='r', x=self.data[self.shot].Q4_phase['Ph2'].index, 
-                              y=self.data[self.shot].Q4_phase['Ph2'].values)
-                # to be continued
+                self.PowQ4.plot(pen='r', x=self.data[self.shot].Q4_amplitude['PrG'].index/1e6, 
+                              y=self.data[self.shot].Q4_amplitude['PrG'].values)
+                self.PowQ4.plot(pen='g', x=self.data[self.shot].Q4_amplitude['PiD'].index/1e6, 
+                              y=self.data[self.shot].Q4_amplitude['PiD'].values)
+                self.PowQ4.plot(pen='m', x=self.data[self.shot].Q4_amplitude['PrD'].index/1e6, 
+                              y=self.data[self.shot].Q4_amplitude['PrD'].values)
+                
+                self.VolQ4.plot(pen='b', x=self.data[self.shot].Q4_amplitude['V1'].index/1e6,
+                               y=self.data[self.shot].Q4_amplitude['V1'].values/10, clear=True)
+                self.VolQ4.plot(pen='r', x=self.data[self.shot].Q4_amplitude['V2'].index/1e6,
+                               y=self.data[self.shot].Q4_amplitude['V2'].values/10)
+                self.VolQ4.plot(pen='g', x=self.data[self.shot].Q4_amplitude['V3'].index/1e6,
+                               y=self.data[self.shot].Q4_amplitude['V3'].values/10)
+                self.VolQ4.plot(pen='m', x=self.data[self.shot].Q4_amplitude['V4'].index/1e6,
+                               y=self.data[self.shot].Q4_amplitude['V4'].values/10)
+            if not self.data[self.shot].Q4_phase.empty:               
+                self.PhaQ4.plot(pen='b', x=self.data[self.shot].Q4_phase['Ph1'].index/1e6, 
+                              y=(self.data[self.shot].Q4_phase['Ph1'].values/100 -
+                                 self.data[self.shot].Q4_phase['Ph3'].values/100) % 360, clear=True)
+                self.PhaQ4.plot(pen='r', x=self.data[self.shot].Q4_phase['Ph2'].index/1e6, 
+                              y=(self.data[self.shot].Q4_phase['Ph2'].values/100 - 
+                                 self.data[self.shot].Q4_phase['Ph4'].values/100) % 360)
                 
         except AttributeError as e:
             print('No data in the shot!')

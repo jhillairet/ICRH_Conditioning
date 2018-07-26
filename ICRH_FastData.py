@@ -69,7 +69,7 @@ def read_fast_data_7853(filename):
                        names=('V1', 'V2', 'V3', 'V4', 
                               'PiG', 'PrG', 'PiD', 'PrD', 
                               'CGH', 'CGB', 'CDH', 'CDB', ''))
-    return amplitudes 
+    return amplitudes
 
 class FastData():
     '''Fast Data structure'''
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     io.copy_remote_files_to_local(remote_files, 
                                   local_data_path='data/Fast_Data', 
                                   remote_data_path='/media/ssd/Fast_Data/', 
-                                  nb_last_file_to_download=500000)
+                                  nb_last_file_to_download=5)
     
     # Plot the last data file. 
     local_file_list = io.list_local_files()
