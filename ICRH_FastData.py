@@ -66,8 +66,8 @@ def read_fast_data_7853(filename):
     """
     amplitudes = pd.read_csv(filename, delimiter='\t',
                        index_col=8,
-                       names=('V1', 'V2', 'V3', 'V4', 
-                              'PiG', 'PrG', 'PiD', 'PrD', 
+                       names=('PiG', 'PrG', 'PiD', 'PrD', 
+							   'V1', 'V2', 'V3', 'V4', 
                               'CGH', 'CGB', 'CDH', 'CDB', ''))
     return amplitudes
 

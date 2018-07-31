@@ -72,22 +72,22 @@ class AppForm(QMainWindow):
         
         self.l = pg.GraphicsLayoutWidget(border=(100,100,100))
         # 1st row : RF power
-        self.PowQ1 = self.l.addPlot(row=0, col=0, name='Pow', title='Q1 Power (PiG, PrG, PiD, PrD)')
-        self.PowQ2 = self.l.addPlot(row=0, col=1, name='Pow', title='Q2 Power (PiG, PrG, PiD, PrD)')        
-        self.PowQ4 = self.l.addPlot(row=0, col=2, name='Pow', title='Q4 Power (PiG, PrG, PiD, PrD)')
+        self.PowQ1 = self.l.addPlot(row=0, col=0, name='Pow1', title='Q1 Power (PiG, PrG, PiD, PrD)')
+        self.PowQ2 = self.l.addPlot(row=0, col=1, name='Pow2', title='Q2 Power (PiG, PrG, PiD, PrD)')        
+        self.PowQ4 = self.l.addPlot(row=0, col=2, name='Pow4', title='Q4 Power (PiG, PrG, PiD, PrD)')
         
         # 2nd row : RF voltages
-        self.VolQ1 = self.l.addPlot(row=1, col=0, name='Vol', title='Q1 Voltages (V1, V2, V3, V4)')        
-        self.VolQ2 = self.l.addPlot(row=1, col=1, name='Vol', title='Q2 Voltages (V1, V2, V3, V4)') 
-        self.VolQ4 = self.l.addPlot(row=1, col=2, name='Vol', title='Q4 Voltages (V1, V2, V3, V4)')
+        self.VolQ1 = self.l.addPlot(row=1, col=0, name='Vol1', title='Q1 Voltages (V1, V2, V3, V4)')        
+        self.VolQ2 = self.l.addPlot(row=1, col=1, name='Vol2', title='Q2 Voltages (V1, V2, V3, V4)') 
+        self.VolQ4 = self.l.addPlot(row=1, col=2, name='Vol4', title='Q4 Voltages (V1, V2, V3, V4)')
         self.VolQ1.setXLink(self.PowQ1)
         self.VolQ2.setXLink(self.PowQ2)
         self.VolQ4.setXLink(self.PowQ4)   
         
         # 3rd row : RF phase
-        self.PhaQ1 = self.l.addPlot(row=2, col=0, name='Pha', title='Q1 Phase (Ph1-Ph3, Ph2-Ph4)')
-        self.PhaQ2 = self.l.addPlot(row=2, col=1, name='Pha', title='Q2 Phase (Ph1-Ph3, Ph2-Ph4)')
-        self.PhaQ4 = self.l.addPlot(row=2, col=2, name='Pha', title='Q4 Phase (Ph1-Ph3, Ph2-Ph4)')
+        self.PhaQ1 = self.l.addPlot(row=2, col=0, name='Pha1', title='Q1 Phase (Ph4+Ph1-Ph6, Ph5+Ph1-Ph7)')
+        self.PhaQ2 = self.l.addPlot(row=2, col=1, name='Pha2', title='Q2 Phase (Ph4+Ph1-Ph6, Ph5+Ph1-Ph7)')
+        self.PhaQ4 = self.l.addPlot(row=2, col=2, name='Pha4', title='Q4 Phase (Ph4+Ph1-Ph6, Ph5+Ph1-Ph7)')
         self.PhaQ1.setXLink(self.PowQ1)
         self.PhaQ2.setXLink(self.PowQ2)
         self.PhaQ4.setXLink(self.PowQ4)        
@@ -181,11 +181,13 @@ class AppForm(QMainWindow):
 
             if not self.data[self.shot].Q1_phase.empty:               
                 self.PhaQ1.plot(pen='b', x=self.data[self.shot].Q1_phase['Ph1'].index/1e6, 
-                              y=(self.data[self.shot].Q1_phase['Ph1'].values/100 -
-                                 self.data[self.shot].Q1_phase['Ph3'].values/100) % 360, clear=True)
+                              y=(self.data[self.shot].Q1_phase['Ph4'].values/100 +
+                                 self.data[self.shot].Q1_phase['Ph1'].values/100 -
+                                 self.data[self.shot].Q1_phase['Ph6'].values/100) % 360, clear=True)
                 self.PhaQ1.plot(pen='r', x=self.data[self.shot].Q1_phase['Ph2'].index/1e6, 
-                              y=(self.data[self.shot].Q1_phase['Ph2'].values/100 - 
-                                 self.data[self.shot].Q1_phase['Ph4'].values/100) % 360)
+                              y=(self.data[self.shot].Q1_phase['Ph5'].values/100 +
+                                 self.data[self.shot].Q1_phase['Ph1'].values/100 -  
+                                 self.data[self.shot].Q1_phase['Ph7'].values/100) % 360)
 
             # Q2 
             if not self.data[self.shot].Q2_amplitude.empty:
@@ -209,11 +211,13 @@ class AppForm(QMainWindow):
 
             if not self.data[self.shot].Q2_phase.empty:               
                 self.PhaQ2.plot(pen='b', x=self.data[self.shot].Q2_phase['Ph1'].index/1e6, 
-                              y=(self.data[self.shot].Q2_phase['Ph1'].values/100 -
-                                 self.data[self.shot].Q2_phase['Ph3'].values/100) % 360, clear=True)
+                              y=(self.data[self.shot].Q2_phase['Ph4'].values/100 +
+                                 self.data[self.shot].Q2_phase['Ph1'].values/100 -
+                                 self.data[self.shot].Q2_phase['Ph6'].values/100) % 360, clear=True)
                 self.PhaQ2.plot(pen='r', x=self.data[self.shot].Q2_phase['Ph2'].index/1e6, 
-                              y=(self.data[self.shot].Q2_phase['Ph2'].values/100 - 
-                                 self.data[self.shot].Q2_phase['Ph4'].values/100) % 360)
+                              y=(self.data[self.shot].Q2_phase['Ph5'].values/100 +
+                                 self.data[self.shot].Q2_phase['Ph1'].values/100 -  
+                                 self.data[self.shot].Q2_phase['Ph7'].values/100) % 360)
 
             # Q4
             if not self.data[self.shot].Q4_amplitude.empty:
@@ -236,11 +240,13 @@ class AppForm(QMainWindow):
                                y=self.data[self.shot].Q4_amplitude['V4'].values/10)
             if not self.data[self.shot].Q4_phase.empty:               
                 self.PhaQ4.plot(pen='b', x=self.data[self.shot].Q4_phase['Ph1'].index/1e6, 
-                              y=(self.data[self.shot].Q4_phase['Ph1'].values/100 -
-                                 self.data[self.shot].Q4_phase['Ph3'].values/100) % 360, clear=True)
+                              y=(self.data[self.shot].Q4_phase['Ph4'].values/100 +
+                                 self.data[self.shot].Q4_phase['Ph1'].values/100 -
+                                 self.data[self.shot].Q4_phase['Ph6'].values/100) % 360, clear=True)
                 self.PhaQ4.plot(pen='r', x=self.data[self.shot].Q4_phase['Ph2'].index/1e6, 
-                              y=(self.data[self.shot].Q4_phase['Ph2'].values/100 - 
-                                 self.data[self.shot].Q4_phase['Ph4'].values/100) % 360)
+                              y=(self.data[self.shot].Q4_phase['Ph5'].values/100 +
+                                 self.data[self.shot].Q4_phase['Ph1'].values/100 -  
+                                 self.data[self.shot].Q4_phase['Ph7'].values/100) % 360)
                 
         except AttributeError as e:
             print('No data in the shot!')
