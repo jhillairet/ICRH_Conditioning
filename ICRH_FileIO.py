@@ -9,7 +9,7 @@ import subprocess
 import os
 import glob
 
-def list_remote_files(remote_path='/media/ssd/Conditionnement/'):
+def list_remote_files(remote_path='/home/dfci/media/ssd/Conditionnement/'):
     """
     Returns a list of the remote files (.csv) located in the remote acquisition computer.
     """
@@ -32,8 +32,8 @@ def list_local_files(local_data_path = 'data/'):
     return local_file_list
 
 def copy_remote_files_to_local(remote_file_list, local_data_path = 'data/', 
-                               remote_data_path='/media/ssd/Conditionnement/', 
-                               nb_last_file_to_download=10):
+                               remote_data_path='/home/dfci/media/ssd/Conditionnement/', 
+                               nb_last_file_to_download=1000):
     """
     Copy a list of remote files into the local directory, only if the files do
     not exist locally.

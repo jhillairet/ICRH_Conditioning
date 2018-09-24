@@ -66,8 +66,8 @@ def read_fast_data_7853(filename):
     """
     amplitudes = pd.read_csv(filename, delimiter='\t',
                        index_col=8,
-                       names=('PiG', 'PrG', 'PiD', 'PrD', 
-							   'V1', 'V2', 'V3', 'V4', 
+                       names=('PiG', 'PrG', 'PiD', 'PrD',
+                              'V1', 'V2', 'V3', 'V4', 
                               'CGH', 'CGB', 'CDH', 'CDB', ''))
     return amplitudes
 
@@ -93,12 +93,12 @@ class FastData():
 
 if __name__ == '__main__':
     # Copy the recent data file into the local directory
-    remote_files = io.list_remote_files(remote_path='/media/ssd/Fast_Data/')
+    remote_files = io.list_remote_files(remote_path='/home/dfci/media/ssd/Fast_Data/')
     #files_to_copy = filter_by_shot(all_fast_data_remote_files, 50)
     
     io.copy_remote_files_to_local(remote_files, 
                                   local_data_path='data/Fast_Data', 
-                                  remote_data_path='/media/ssd/Fast_Data/', 
+                                  remote_data_path='/home/dfci/media/ssd/Fast_Data/', 
                                   nb_last_file_to_download=5)
     
     # Plot the last data file. 
