@@ -6,7 +6,7 @@ try:
     import PyQt5.QtGui as QtGui 
     import PyQt5.QtWidgets as QtWidgets
     from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QPushButton, QListWidget,
-                                 QHBoxLayout, QVBoxLayout)
+                                 QHBoxLayout, QVBoxLayout, QStatusBar)
     from matplotlib.backends.backend_qt5agg import (
             FigureCanvasQTAgg as FigureCanvas,
             NavigationToolbar2QT as NavigationToolbar)
@@ -15,7 +15,7 @@ except ImportError:
     import PyQt4.QtGui as QtGui
     import PyQt4.QtGui as QtWidgets
     from PyQt4.QtGui import (QMainWindow, QApplication, QWidget, QPushButton, QListWidget,
-                                 QHBoxLayout, QVBoxLayout)
+                                 QHBoxLayout, QVBoxLayout, QStatusBar)
     from matplotlib.backends.backend_qt4agg import (
             FigureCanvasQTAgg as FigureCanvas,
             NavigationToolbar2QT as NavigationToolbar)
@@ -25,9 +25,31 @@ import pyqtgraph as pg
 import ICRH_FastData as fast
 import ICRH_FileIO as io
 
+# Remote (on dfci) and local (linux) absolute path
+REMOTE_PATH = '/home/dfci/media/ssd/Fast_Data/'
+LOCAL_PATH = '/Home/dfci/DATA_DFCI/Acqui_Cond_and_Fast/data/Fast_Data'
+
 # switch default plotting scheme to white
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
+
+class CrossHairManager(object):
+    def __init__(self):
+        self.vLine = pg.InfiniteLine(angle=180, movable=False)
+        self.hLine = pg.InfiniteLine(angle=0, movable=False)
+        
+    def linkWithPlotItem(self, plt_it):
+        self.plt = plt_it
+        self.plt.addItem(self.vLine, ignoreBounds=True)
+        self.plt.addItem(self.hLine, ignoreBounds=True)
+        self.plt.scene().sigMouseMoved.connect(self.mouseMoved)
+        
+    def mouseMoved(self, evt):
+        if self.plt.sceneBoundingRect().contains(evt):
+            mousePoint = self.plt.vb.mapSceneToView(evt)
+            #self.statusBar.showMessage(f"x={mousePoint.x()},\t   y={mousePoint.y()}" )
+            self.vLine.setPos(mousePoint.x())
+            self.hLine.setPos(mousePoint.y())      
 
 class AppForm(QMainWindow):
     def __init__(self, parent=None):
@@ -72,7 +94,7 @@ class AppForm(QMainWindow):
         
         self.l = pg.GraphicsLayoutWidget(border=(100,100,100))
         # 1st row : RF power
-        self.PowQ1 = self.l.addPlot(row=0, col=0, name='Pow1', title='Q1 Power (PiG, PrG, PiD, PrD)')
+        self.PowQ1 = self.l.addPlot(row=0, col=0, name='Pow1', title='Q1 Power (PiG, PrG, PiD, PrD)') #plotItem
         self.PowQ2 = self.l.addPlot(row=0, col=1, name='Pow2', title='Q2 Power (PiG, PrG, PiD, PrD)')        
         self.PowQ4 = self.l.addPlot(row=0, col=2, name='Pow4', title='Q4 Power (PiG, PrG, PiD, PrD)')
         
@@ -92,8 +114,8 @@ class AppForm(QMainWindow):
         self.PhaQ2.setXLink(self.PowQ2)
         self.PhaQ4.setXLink(self.PowQ4)        
 
-        #self.l.nextRow()
-        vbox_canvas = QVBoxLayout()                
+        # Layout assembly
+        vbox_canvas = QVBoxLayout()            
         vbox_canvas.addWidget(self.l)
 
         hbox = QHBoxLayout()
@@ -103,18 +125,26 @@ class AppForm(QMainWindow):
         self.main_frame.setLayout(hbox)
         self.setCentralWidget(self.main_frame)
 
+        # Status bar
+        self.statusBar = QStatusBar()
+        self.setStatusBar(self.statusBar)
+        
+        self.cross = CrossHairManager()
+        self.cross.linkWithPlotItem(self.PowQ2)
+
+        
     def get_local_file_list(self):
-        return io.list_local_files(local_data_path = 'data/Fast_Data/')
+        return io.list_local_files(local_data_path = LOCAL_PATH)
 
     def get_remote_file_list(self):
-        return io.list_remote_files(remote_path='/media/ssd/Fast_Data')
+        return io.list_remote_files(remote_path=REMOTE_PATH)
 
     def sync_files(self):
         '''Synchronize remote files to local directory'''
         self.remote_files = self.get_remote_file_list()
         io.copy_remote_files_to_local(self.remote_files,
-                                      local_data_path = 'data/Fast_Data/',
-                                      remote_data_path='/media/ssd/Fast_Data')
+                                      local_data_path = LOCAL_PATH,
+                                      remote_data_path= REMOTE_PATH)
         self.local_files = self.get_local_file_list()
 
     def update_shot_list(self):
@@ -162,22 +192,22 @@ class AppForm(QMainWindow):
             # Q1
             if not self.data[self.shot].Q1_amplitude.empty:
                 self.PowQ1.plot(pen='b', x=self.data[self.shot].Q1_amplitude['PiG'].index/1e6, 
-                              y=self.data[self.shot].Q1_amplitude['PiG'].values, clear=True)
+                              y=self.data[self.shot].Q1_amplitude['PiG'].values/10, clear=True)
                 self.PowQ1.plot(pen='r', x=self.data[self.shot].Q1_amplitude['PrG'].index/1e6, 
-                              y=self.data[self.shot].Q1_amplitude['PrG'].values)
+                              y=self.data[self.shot].Q1_amplitude['PrG'].values/10)
                 self.PowQ1.plot(pen='g', x=self.data[self.shot].Q1_amplitude['PiD'].index/1e6, 
-                              y=self.data[self.shot].Q1_amplitude['PiD'].values)
+                              y=self.data[self.shot].Q1_amplitude['PiD'].values/10)
                 self.PowQ1.plot(pen='m', x=self.data[self.shot].Q1_amplitude['PrD'].index/1e6, 
-                              y=self.data[self.shot].Q1_amplitude['PrD'].values)
+                              y=self.data[self.shot].Q1_amplitude['PrD'].values/10)
                 
                 self.VolQ1.plot(pen='b', x=self.data[self.shot].Q1_amplitude['V1'].index/1e6,
-                               y=self.data[self.shot].Q1_amplitude['V1'].values/10, clear=True)
+                               y=self.data[self.shot].Q1_amplitude['V1'].values, clear=True)
                 self.VolQ1.plot(pen='r', x=self.data[self.shot].Q1_amplitude['V2'].index/1e6,
-                               y=self.data[self.shot].Q1_amplitude['V2'].values/10)
+                               y=self.data[self.shot].Q1_amplitude['V2'].values)
                 self.VolQ1.plot(pen='g', x=self.data[self.shot].Q1_amplitude['V3'].index/1e6,
-                               y=self.data[self.shot].Q1_amplitude['V3'].values/10)
+                               y=self.data[self.shot].Q1_amplitude['V3'].values)
                 self.VolQ1.plot(pen='m', x=self.data[self.shot].Q1_amplitude['V4'].index/1e6,
-                               y=self.data[self.shot].Q1_amplitude['V4'].values/10)
+                               y=self.data[self.shot].Q1_amplitude['V4'].values)
 
             if not self.data[self.shot].Q1_phase.empty:               
                 self.PhaQ1.plot(pen='b', x=self.data[self.shot].Q1_phase['Ph1'].index/1e6, 
@@ -192,22 +222,22 @@ class AppForm(QMainWindow):
             # Q2 
             if not self.data[self.shot].Q2_amplitude.empty:
                 self.PowQ2.plot(pen='b', x=self.data[self.shot].Q2_amplitude['PiG'].index/1e6, 
-                              y=self.data[self.shot].Q2_amplitude['PiG'].values, clear=True)
+                              y=self.data[self.shot].Q2_amplitude['PiG'].values/10, clear=True)
                 self.PowQ2.plot(pen='r', x=self.data[self.shot].Q2_amplitude['PrG'].index/1e6, 
-                              y=self.data[self.shot].Q2_amplitude['PrG'].values)
+                              y=self.data[self.shot].Q2_amplitude['PrG'].values/10)
                 self.PowQ2.plot(pen='g', x=self.data[self.shot].Q2_amplitude['PiD'].index/1e6, 
-                              y=self.data[self.shot].Q2_amplitude['PiD'].values)
+                              y=self.data[self.shot].Q2_amplitude['PiD'].values/10)
                 self.PowQ2.plot(pen='m', x=self.data[self.shot].Q2_amplitude['PrD'].index/1e6, 
-                              y=self.data[self.shot].Q2_amplitude['PrD'].values)
+                              y=self.data[self.shot].Q2_amplitude['PrD'].values/10)
                 
                 self.VolQ2.plot(pen='b', x=self.data[self.shot].Q2_amplitude['V1'].index/1e6,
-                               y=self.data[self.shot].Q2_amplitude['V1'].values/10, clear=True)
+                               y=self.data[self.shot].Q2_amplitude['V1'].values, clear=True)
                 self.VolQ2.plot(pen='r', x=self.data[self.shot].Q2_amplitude['V2'].index/1e6,
-                               y=self.data[self.shot].Q2_amplitude['V2'].values/10)
+                               y=self.data[self.shot].Q2_amplitude['V2'].values)
                 self.VolQ2.plot(pen='g', x=self.data[self.shot].Q2_amplitude['V3'].index/1e6,
-                               y=self.data[self.shot].Q2_amplitude['V3'].values/10)
+                               y=self.data[self.shot].Q2_amplitude['V3'].values)
                 self.VolQ2.plot(pen='m', x=self.data[self.shot].Q2_amplitude['V4'].index/1e6,
-                               y=self.data[self.shot].Q2_amplitude['V4'].values/10)
+                               y=self.data[self.shot].Q2_amplitude['V4'].values)
 
             if not self.data[self.shot].Q2_phase.empty:               
                 self.PhaQ2.plot(pen='b', x=self.data[self.shot].Q2_phase['Ph1'].index/1e6, 
@@ -222,22 +252,22 @@ class AppForm(QMainWindow):
             # Q4
             if not self.data[self.shot].Q4_amplitude.empty:
                 self.PowQ4.plot(pen='b', x=self.data[self.shot].Q4_amplitude['PiG'].index/1e6, 
-                              y=self.data[self.shot].Q4_amplitude['PiG'].values, clear=True)
+                              y=self.data[self.shot].Q4_amplitude['PiG'].values/10, clear=True)
                 self.PowQ4.plot(pen='r', x=self.data[self.shot].Q4_amplitude['PrG'].index/1e6, 
-                              y=self.data[self.shot].Q4_amplitude['PrG'].values)
+                              y=self.data[self.shot].Q4_amplitude['PrG'].values/10)
                 self.PowQ4.plot(pen='g', x=self.data[self.shot].Q4_amplitude['PiD'].index/1e6, 
-                              y=self.data[self.shot].Q4_amplitude['PiD'].values)
+                              y=self.data[self.shot].Q4_amplitude['PiD'].values/10)
                 self.PowQ4.plot(pen='m', x=self.data[self.shot].Q4_amplitude['PrD'].index/1e6, 
-                              y=self.data[self.shot].Q4_amplitude['PrD'].values)
+                              y=self.data[self.shot].Q4_amplitude['PrD'].values/10)
                 
                 self.VolQ4.plot(pen='b', x=self.data[self.shot].Q4_amplitude['V1'].index/1e6,
-                               y=self.data[self.shot].Q4_amplitude['V1'].values/10, clear=True)
+                               y=self.data[self.shot].Q4_amplitude['V1'].values, clear=True)
                 self.VolQ4.plot(pen='r', x=self.data[self.shot].Q4_amplitude['V2'].index/1e6,
-                               y=self.data[self.shot].Q4_amplitude['V2'].values/10)
+                               y=self.data[self.shot].Q4_amplitude['V2'].values)
                 self.VolQ4.plot(pen='g', x=self.data[self.shot].Q4_amplitude['V3'].index/1e6,
-                               y=self.data[self.shot].Q4_amplitude['V3'].values/10)
+                               y=self.data[self.shot].Q4_amplitude['V3'].values)
                 self.VolQ4.plot(pen='m', x=self.data[self.shot].Q4_amplitude['V4'].index/1e6,
-                               y=self.data[self.shot].Q4_amplitude['V4'].values/10)
+                               y=self.data[self.shot].Q4_amplitude['V4'].values)
             if not self.data[self.shot].Q4_phase.empty:               
                 self.PhaQ4.plot(pen='b', x=self.data[self.shot].Q4_phase['Ph1'].index/1e6, 
                               y=(self.data[self.shot].Q4_phase['Ph4'].values/100 +
@@ -247,7 +277,7 @@ class AppForm(QMainWindow):
                               y=(self.data[self.shot].Q4_phase['Ph5'].values/100 +
                                  self.data[self.shot].Q4_phase['Ph1'].values/100 -  
                                  self.data[self.shot].Q4_phase['Ph7'].values/100) % 360)
-                
+                    
         except AttributeError as e:
             print('No data in the shot!')
             print(e)
@@ -262,6 +292,7 @@ def main():
     form = AppForm()
     form.show()
     app.exec_()
+    
 
 if __name__ == "__main__":
     main()
