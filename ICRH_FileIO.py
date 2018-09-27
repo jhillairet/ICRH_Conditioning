@@ -53,6 +53,25 @@ def copy_remote_files_to_local(remote_file_list, local_data_path = 'data/',
             
     print('OK, done.')
     
+def delete_remote_files(remote_file_list, remote_data_path):
+    """ delete a  list of files on the remote server """
+    # TODO: deal properly with errors
+    for file in remote_file_list:
+        path=os.path.join(remote_data_path, file)
+        print(f'Deleting remote file: {path}')
+        command = ["ssh", "dfci@dfci", 'rm', path]
+        output=subprocess.call(command, 
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                universal_newlines=True)
+
+def delete_local_files(local_file_list, local_data_path):
+    """ delete a list of files locally """
+    # TODO: deal properly with errors 
+    for file in local_file_list:
+        path=os.path.join(local_data_path, file)
+        print(f'Deleting local file: {file}')
+        os.remove(path)
+    
 if __name__ == '__main__':
     # Copy the recent data file into the local directory
     remote_file_list = list_remote_files()

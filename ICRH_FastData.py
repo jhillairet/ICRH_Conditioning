@@ -61,13 +61,13 @@ def read_fast_data_7853(filename):
     """
     Import and return the ICRH Conditioning data into a pandas DataFrame
     
-    Voltage and Power Fast Data from the NI 7851 board. 
+    Voltage and Power Fast Data from the NI 7853 board. 
     Time in µs
     """
     amplitudes = pd.read_csv(filename, delimiter='\t',
-                       index_col=8,
+                       index_col=9,
                        names=('PiG', 'PrG', 'PiD', 'PrD',
-                              'V1', 'V2', 'V3', 'V4', 
+                              'V1', 'V2', 'V3', 'V4', 'Consigne',
                               'CGH', 'CGB', 'CDH', 'CDB', ''))
     return amplitudes
 

@@ -6,7 +6,7 @@ try:
     import PyQt5.QtGui as QtGui 
     import PyQt5.QtWidgets as QtWidgets
     from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QPushButton, QListWidget,
-                                 QHBoxLayout, QVBoxLayout, QStatusBar)
+                                 QHBoxLayout, QVBoxLayout, QStatusBar, QMessageBox)
     from matplotlib.backends.backend_qt5agg import (
             FigureCanvasQTAgg as FigureCanvas,
             NavigationToolbar2QT as NavigationToolbar)
@@ -15,7 +15,7 @@ except ImportError:
     import PyQt4.QtGui as QtGui
     import PyQt4.QtGui as QtWidgets
     from PyQt4.QtGui import (QMainWindow, QApplication, QWidget, QPushButton, QListWidget,
-                                 QHBoxLayout, QVBoxLayout, QStatusBar)
+                                 QHBoxLayout, QVBoxLayout, QStatusBar, QMessageBox)
     from matplotlib.backends.backend_qt4agg import (
             FigureCanvasQTAgg as FigureCanvas,
             NavigationToolbar2QT as NavigationToolbar)
@@ -76,6 +76,11 @@ class AppForm(QMainWindow):
         self.refresh_button.setFont(button_default_font)
         self.refresh_button.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_BrowserReload))
         self.refresh_button.clicked.connect(self.refresh)
+        # Delete button
+        self.delete_button = QPushButton('Delete', parent=self.main_frame)
+        self.delete_button.setFont(button_default_font)
+        self.delete_button.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_TrashIcon))
+        self.delete_button.clicked.connect(self.delete_selected_shot)    
         # Plot button
         self.plot_button = QPushButton('Plot', parent=self.main_frame)
         self.plot_button.setFont(button_default_font)
@@ -89,6 +94,7 @@ class AppForm(QMainWindow):
         # Layout construction
         vbox_shots = QVBoxLayout()
         vbox_shots.addWidget(self.refresh_button)
+        vbox_shots.addWidget(self.delete_button)
         vbox_shots.addWidget(self.shot_list_widget)
         vbox_shots.addWidget(self.plot_button)
         
@@ -134,7 +140,7 @@ class AppForm(QMainWindow):
 
         
     def get_local_file_list(self):
-        return io.list_local_files(local_data_path = LOCAL_PATH)
+        return io.list_local_files(local_data_path=LOCAL_PATH)
 
     def get_remote_file_list(self):
         return io.list_remote_files(remote_path=REMOTE_PATH)
@@ -155,11 +161,44 @@ class AppForm(QMainWindow):
             self.shot_list_widget.addItem(str(shot))
     
     def refresh(self):
+        """ Refresh the shot list """
         self.sync_files() 
         self.update_shot_list()
+        
+    def delete_selected_shot(self):
+        """ Delete the shot which is currently selected in the shot list """
+        # get the selected shot numbers
+        
+        for item in self.shot_list_widget.selectedItems():
+            selected_shot = item.text()
+            
+            msgBox = QMessageBox()
+            msgBox.setText(f'Voulez-vous supprimer les données associées au choc {selected_shot}')
+            msgBox.setInformativeText('Les fichiers seront supprimés localement ET sur le serveur dfci')
+            msgBox.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
+            msgBox.setDefaultButton(QMessageBox.No)
+            reply = msgBox.exec_()
+            if reply == QMessageBox.Yes:
+                self.delete_shot(selected_shot)
+            
+    def delete_shot(self, shot=None):
+        """ Delete the files associated to the given shot number """
+        if shot:
+            print(f'Suppression du choc {shot}!!')
+            shot_filenames = fast.get_shot_filenames(shot, path='data/Fast_Data')
+            # remove the relative path of the filenames   
+            shot_filenames = [file.replace('data/Fast_Data/', '') for file in shot_filenames]
+            print(f'Les fichiers suivant vont etre supprimes: {shot_filenames}')
+            io.delete_remote_files(shot_filenames, remote_data_path=REMOTE_PATH)
+            io.delete_local_files(shot_filenames, local_data_path=LOCAL_PATH)
+	    # update the shot list in order to supress the shot number we just had removed
+            self.refresh()
     
     def on_shot_list_clicked(self, item):
         ''' Convert into DF when user select a shot number, essentially to speed-up the later plot'''
+        # change the mouse cursor to indicate the user should wait until the file is processed
+        QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        
         # Convert the shot item label into shot number
         selected_shot = item.text()
         try:
@@ -177,6 +216,8 @@ class AppForm(QMainWindow):
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+        # back the cursor to normal
+        QtGui.QApplication.restoreOverrideCursor()
     
     def convert_to_DF(self, shot):
         ''' Convert a shot Fast Data into Pandas DataFrame '''
@@ -199,6 +240,9 @@ class AppForm(QMainWindow):
                               y=self.data[self.shot].Q1_amplitude['PiD'].values/10)
                 self.PowQ1.plot(pen='m', x=self.data[self.shot].Q1_amplitude['PrD'].index/1e6, 
                               y=self.data[self.shot].Q1_amplitude['PrD'].values/10)
+                self.PowQ1.plot(pen='k', x=self.data[self.shot].Q1_amplitude['Consigne'].index/1e6, 
+                              y=self.data[self.shot].Q1_amplitude['Consigne'].values/10/2) 
+                              
                 
                 self.VolQ1.plot(pen='b', x=self.data[self.shot].Q1_amplitude['V1'].index/1e6,
                                y=self.data[self.shot].Q1_amplitude['V1'].values, clear=True)
@@ -229,6 +273,8 @@ class AppForm(QMainWindow):
                               y=self.data[self.shot].Q2_amplitude['PiD'].values/10)
                 self.PowQ2.plot(pen='m', x=self.data[self.shot].Q2_amplitude['PrD'].index/1e6, 
                               y=self.data[self.shot].Q2_amplitude['PrD'].values/10)
+                self.PowQ2.plot(pen='k', x=self.data[self.shot].Q2_amplitude['Consigne'].index/1e6, 
+                              y=self.data[self.shot].Q2_amplitude['Consigne'].values/10/2) 
                 
                 self.VolQ2.plot(pen='b', x=self.data[self.shot].Q2_amplitude['V1'].index/1e6,
                                y=self.data[self.shot].Q2_amplitude['V1'].values, clear=True)
@@ -259,7 +305,9 @@ class AppForm(QMainWindow):
                               y=self.data[self.shot].Q4_amplitude['PiD'].values/10)
                 self.PowQ4.plot(pen='m', x=self.data[self.shot].Q4_amplitude['PrD'].index/1e6, 
                               y=self.data[self.shot].Q4_amplitude['PrD'].values/10)
-                
+                self.PowQ4.plot(pen='k', x=self.data[self.shot].Q4_amplitude['Consigne'].index/1e6, 
+                              y=self.data[self.shot].Q4_amplitude['Consigne'].values/10/2)
+                                              
                 self.VolQ4.plot(pen='b', x=self.data[self.shot].Q4_amplitude['V1'].index/1e6,
                                y=self.data[self.shot].Q4_amplitude['V1'].values, clear=True)
                 self.VolQ4.plot(pen='r', x=self.data[self.shot].Q4_amplitude['V2'].index/1e6,
