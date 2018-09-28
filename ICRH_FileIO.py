@@ -22,7 +22,7 @@ def list_remote_files(remote_path='/home/dfci/media/ssd/Conditionnement/'):
     remote_file_list = sorted(remote_file_list, reverse=True) # Most recent first
     return remote_file_list
 
-def list_local_files(local_data_path = 'data/'):
+def list_local_files(local_data_path='data/'):
     """ 
     Returns the list of local files 
     """
@@ -71,6 +71,17 @@ def delete_local_files(local_file_list, local_data_path):
         path=os.path.join(local_data_path, file)
         print(f'Deleting local file: {file}')
         os.remove(path)
+
+def is_empty(file, local_data_path=''):
+    ''' Return True is the file is empty '''
+    return os.stat(os.path.join(local_data_path, file)).st_size == 0
+
+def clean_empty_files(local_data_path=''):
+    local_files = list_local_files(local_data_path)
+    for file in local_files:
+        if is_empty(file, local_data_path):
+            print(f'{file} is empty')
+        
     
 if __name__ == '__main__':
     # Copy the recent data file into the local directory

@@ -84,7 +84,8 @@ class AppForm(QMainWindow):
         # Plot button
         self.plot_button = QPushButton('Plot', parent=self.main_frame)
         self.plot_button.setFont(button_default_font)
-        self.plot_button.clicked.connect(self.update_plot)                                   
+        self.plot_button.clicked.connect(self.update_plot)
+        self.plot_button.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaPlay))                                  
 
         # Shots List
         self.shot_list_widget = QListWidget()
@@ -159,7 +160,9 @@ class AppForm(QMainWindow):
         self.shot_list_widget.clear()
         for shot in self.shot_list:
             self.shot_list_widget.addItem(str(shot))
-    
+        # look for empty shots
+        self.empty_shots = self.list_empty_shots()
+        
     def refresh(self):
         """ Refresh the shot list """
         self.sync_files() 
@@ -168,7 +171,6 @@ class AppForm(QMainWindow):
     def delete_selected_shot(self):
         """ Delete the shot which is currently selected in the shot list """
         # get the selected shot numbers
-        
         for item in self.shot_list_widget.selectedItems():
             selected_shot = item.text()
             
@@ -179,10 +181,15 @@ class AppForm(QMainWindow):
             msgBox.setDefaultButton(QMessageBox.No)
             reply = msgBox.exec_()
             if reply == QMessageBox.Yes:
-                self.delete_shot(selected_shot)
+                # change the mouse cursor to indicate the user should wait until the file are deleted
+                QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+                # delete the files
+                self.delete_shot_files(selected_shot)
+                # back the cursor to normal
+                QtGui.QApplication.restoreOverrideCursor()
             
-    def delete_shot(self, shot=None):
-        """ Delete the files associated to the given shot number """
+    def delete_shot_files(self, shot=None):
+        """ Delete the local and remote files associated to the given shot number """
         if shot:
             print(f'Suppression du choc {shot}!!')
             shot_filenames = fast.get_shot_filenames(shot, path='data/Fast_Data')
@@ -191,9 +198,28 @@ class AppForm(QMainWindow):
             print(f'Les fichiers suivant vont etre supprimes: {shot_filenames}')
             io.delete_remote_files(shot_filenames, remote_data_path=REMOTE_PATH)
             io.delete_local_files(shot_filenames, local_data_path=LOCAL_PATH)
-	    # update the shot list in order to supress the shot number we just had removed
+            # update the shot list in order to supress the shot number we just had removed
             self.refresh()
-    
+
+    def color_shot(self, shot=None, color=QtGui.QColor('gray')):
+        """ Change the shot number font color """
+        if shot:
+            res_list = self.shot_list_widget.findItems(str(shot), QtCore.Qt.MatchRegExp)
+            res_list[0].setForeground(color)
+
+    def list_empty_shots(self):
+        ''' List the shot numbers which (at least one of the) associated files are empty '''
+        empty_shots = []
+        
+        for shot in self.shot_list:
+            shot_filenames = fast.get_shot_filenames(shot)
+            for file in shot_filenames:
+                if io.is_empty(file, local_data_path=''):
+                    self.color_shot(shot)
+                    empty_shots.append(shot)       
+
+        return set(empty_shots)  # convert the list into a set to get unique values
+
     def on_shot_list_clicked(self, item):
         ''' Convert into DF when user select a shot number, essentially to speed-up the later plot'''
         # change the mouse cursor to indicate the user should wait until the file is processed

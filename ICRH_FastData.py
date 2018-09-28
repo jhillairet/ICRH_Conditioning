@@ -53,8 +53,8 @@ def read_fast_data_7851(filename):
     Time in µs
     '''
     phases = pd.read_csv(filename, delimiter='\t',
-                     index_col=7, 
-                     names=('Ph1', 'Ph2', 'Ph3', 'Ph4', 'Ph5', 'Ph6', 'Ph7', ''))
+                     index_col='t', 
+                     names=('Ph1', 'Ph2', 'Ph3', 'Ph4', 'Ph5', 'Ph6', 'Ph7', 't', ''))
     return phases
     
 def read_fast_data_7853(filename):
@@ -65,9 +65,9 @@ def read_fast_data_7853(filename):
     Time in µs
     """
     amplitudes = pd.read_csv(filename, delimiter='\t',
-                       index_col=9,
+                       index_col='t',
                        names=('PiG', 'PrG', 'PiD', 'PrD',
-                              'V1', 'V2', 'V3', 'V4', 'Consigne',
+                              'V1', 'V2', 'V3', 'V4', 't', 'Consigne',
                               'CGH', 'CGB', 'CDH', 'CDB', ''))
     return amplitudes
 
