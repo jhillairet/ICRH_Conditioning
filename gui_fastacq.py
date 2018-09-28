@@ -165,8 +165,14 @@ class AppForm(QMainWindow):
         
     def refresh(self):
         """ Refresh the shot list """
+        # change the mouse cursor to indicate the user should wait until the file is processed
+        QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        # refresh files and update the shot list
         self.sync_files() 
         self.update_shot_list()
+        # back the cursor to normal
+        QtGui.QApplication.restoreOverrideCursor()
+        
         
     def delete_selected_shot(self):
         """ Delete the shot which is currently selected in the shot list """
