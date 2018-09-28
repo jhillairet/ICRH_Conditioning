@@ -25,7 +25,7 @@ cd ~/.ssh/
 ssh-copy-id -i id_rsa.pub dfci@dfci
 ```
 
-NB : the home (~) directory should be set to 755 permission, otherwise SSH will keep asking for a password (cf. https://unix.stackexchange.com/questions/292168/scp-command-keeps-asking-password) 
+NB : the home (~) directory should be set to 755 permission (or 700??), otherwise SSH will keep asking for a password (cf. https://unix.stackexchange.com/questions/292168/scp-command-keeps-asking-password) 
 
 
 * Step 3: Test if the SSH copy works without requiring password on your local computer: 
