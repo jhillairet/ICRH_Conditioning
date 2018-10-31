@@ -52,10 +52,14 @@ def read_fast_data_7851(filename):
     Phase Fast Data from the NI 7853 board
     Time in µs
     '''
-    phases = pd.read_csv(filename, delimiter='\t',
+    try:
+        phases = pd.read_csv(filename, delimiter='\t',
                      index_col='t', 
                      names=('Ph1', 'Ph2', 'Ph3', 'Ph4', 'Ph5', 'Ph6', 'Ph7', 't', ''))
-    return phases
+        return phases
+    except Exception as e:
+        print(f'Error in reading phase (7851) file {filename}: {e}')
+        return None
     
 def read_fast_data_7853(filename):
     """
@@ -64,32 +68,38 @@ def read_fast_data_7853(filename):
     Voltage and Power Fast Data from the NI 7853 board. 
     Time in µs
     """
-    amplitudes = pd.read_csv(filename, delimiter='\t',
+    try:
+        amplitudes = pd.read_csv(filename, delimiter='\t',
                        index_col='t',
                        names=('PiG', 'PrG', 'PiD', 'PrD',
-                              'V1', 'V2', 'V3', 'V4', 't', 'Consigne',
-                              'CGH', 'CGB', 'CDH', 'CDB', ''))
-    return amplitudes
+                              'V1', 'V2', 'V3', 'V4', 'Consigne', 't',
+                               ''))
+        return amplitudes
+    except Exception as e:
+        print(f'Error in reading amplitude (7853) file {filename}: {e}')
+        return None
 
 class FastData():
     '''Fast Data structure'''
     def __init__(self, shot):
         self.shot = shot
         self.shot_files = get_shot_filenames(shot)
-     
-        for file in self.shot_files:
-            if '_0' in file:
-                self.Q1_amplitude = read_fast_data_7853(file)
-            if '_1' in file:
-                self.Q1_phase = read_fast_data_7851(file)
-            if '_2' in file:
-                self.Q2_amplitude = read_fast_data_7853(file)
-            if '_3' in file:
-                self.Q2_phase = read_fast_data_7851(file)
-            if '_4' in file:
-                self.Q4_amplitude = read_fast_data_7853(file)
-            if '_5' in file:
-                self.Q4_phase = read_fast_data_7851(file)
+
+        for filename in self.shot_files:
+            print(f'Reading file {filename}')
+            if '_0.dat' in filename:
+                self.Q1_amplitude = read_fast_data_7853(filename)
+            if '_1.dat' in filename:
+                self.Q1_phase = read_fast_data_7851(filename)
+            if '_2.dat' in filename:
+                self.Q2_amplitude = read_fast_data_7853(filename)
+            if '_3.dat' in filename:
+                self.Q2_phase = read_fast_data_7851(filename)
+            if '_4.dat' in filename:
+                self.Q4_amplitude = read_fast_data_7853(filename)
+            if '_5.dat' in filename:
+                self.Q4_phase = read_fast_data_7851(filename)
+
 
 if __name__ == '__main__':
     # Copy the recent data file into the local directory
