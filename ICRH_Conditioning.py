@@ -25,8 +25,8 @@ def read_conditoning_data(filename):
     # convert phase in degree and wrap it between 0° and 359°
     data['Ph(V1-V3)'] /= 100
     data['Ph(V2-V4)'] /= 100
-    data['Ph(V1-V3)'] %= 360
-    data['Ph(V2-V4)'] %= 360
+    #data['Ph(V1-V3)'] %= 360
+    #data['Ph(V2-V4)'] %= 360
     return data 
 
 def read_conditioning_metadata(filename):
