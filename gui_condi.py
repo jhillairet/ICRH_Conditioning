@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 import os
 import numpy as np
@@ -224,12 +225,12 @@ class AppForm(QMainWindow):
             self.VD.setLabel('left','Probe Voltage', units='V')
             
             # Pression dans le transfo gauche et droit
-            self.pTransG.plot(pen='b', x=time, y=np.power(10, 1.5*data.Vide_gauche.values*1e-3-10), clear=True)
+            self.pTransG.plot(pen='b', x=time, y=np.power(10, 1.667*data.Vide_droit.values*1e-3-9.333), clear=True)
             self.pTransG.setLogMode(y=True)
             self.pTransG.showGrid(y=True)
             self.pTransG.setLabel('bottom','time', units='ms')
             self.pTransG.setLabel('left', 'Pressure [left]', units='Pa')
-            self.pTransD.plot(pen='b', x=time, y=np.power(10, 1.5*data.Vide_droit.values*1e-3-10), clear=True)
+            self.pTransD.plot(pen='b', x=time, y=np.power(10, 1.667*data.Vide_droit.values*1e-3-9.333), clear=True)
             self.pTransD.setLogMode(y=True)
             self.pTransD.showGrid(y=True)
             self.pTransD.setLabel('bottom','time', units='ms')
