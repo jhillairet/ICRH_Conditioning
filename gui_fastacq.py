@@ -25,6 +25,8 @@ import pyqtgraph as pg
 import ICRH_FastData as fast
 import ICRH_FileIO as io
 
+import numpy as np
+
 # Remote (on dfci) and local (linux) absolute path
 REMOTE_PATH = '/home/dfci/media/ssd/Fast_Data/'
 LOCAL_PATH = '/Home/dfci/DATA_DFCI/Acqui_Cond_and_Fast/data/Fast_Data'
@@ -35,9 +37,11 @@ pg.setConfigOption('foreground', 'k')
 
 class CrossHairManager(object):
     def __init__(self):
-        self.vLine = pg.InfiniteLine(angle=180, movable=False)
-        self.hLine = pg.InfiniteLine(angle=0, movable=False)
-        
+        self.vLine = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen('k', width=1))
+        self.hLine = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen('k', width=1), 
+                                        label='{value:0.1f}',
+                                        labelOpts={'position':0.98, 'color': (200,0,0), 'movable': True, 'fill': (0, 0, 200, 100)})
+
     def linkWithPlotItem(self, plt_it):
         self.plt = plt_it
         self.plt.addItem(self.vLine, ignoreBounds=True)
@@ -49,7 +53,8 @@ class CrossHairManager(object):
             mousePoint = self.plt.vb.mapSceneToView(evt)
             #self.statusBar.showMessage(f"x={mousePoint.x()},\t   y={mousePoint.y()}" )
             self.vLine.setPos(mousePoint.x())
-            self.hLine.setPos(mousePoint.y())      
+            self.hLine.setPos(mousePoint.y())
+              
 
 class AppForm(QMainWindow):
     def __init__(self, parent=None):
@@ -101,22 +106,30 @@ class AppForm(QMainWindow):
         
         self.l = pg.GraphicsLayoutWidget(border=(100,100,100))
         # 1st row : RF power
-        self.PowQ1 = self.l.addPlot(row=0, col=0, name='Pow1', title='Q1 Power (PiG, PrG, PiD, PrD)') #plotItem
-        self.PowQ2 = self.l.addPlot(row=0, col=1, name='Pow2', title='Q2 Power (PiG, PrG, PiD, PrD)')        
-        self.PowQ4 = self.l.addPlot(row=0, col=2, name='Pow4', title='Q4 Power (PiG, PrG, PiD, PrD)')
+        self.PowQ1 = self.l.addPlot(row=0, col=0, name='Pow1', title='Q1 Power (<font color="blue">PiG</font>, <font color="red">PrG</font>, <font color="green">PiD</font>, <font color="magenta">PrD</font>)') #plotItem
+        self.PowQ2 = self.l.addPlot(row=0, col=1, name='Pow2', title='Q2 Power (<font color="blue">PiG</font>, <font color="red">PrG</font>, <font color="green">PiD</font>, <font color="magenta">PrD</font>)')        
+        self.PowQ4 = self.l.addPlot(row=0, col=2, name='Pow4', title='Q4 Power (<font color="blue">PiG</font>, <font color="red">PrG</font>, <font color="green">PiD</font>, <font color="magenta">PrD</font>)')
         
-        # 2nd row : RF voltages
-        self.VolQ1 = self.l.addPlot(row=1, col=0, name='Vol1', title='Q1 Voltages (V1, V2, V3, V4)')        
-        self.VolQ2 = self.l.addPlot(row=1, col=1, name='Vol2', title='Q2 Voltages (V1, V2, V3, V4)') 
-        self.VolQ4 = self.l.addPlot(row=1, col=2, name='Vol4', title='Q4 Voltages (V1, V2, V3, V4)')
+        # 2nd row : VSWR
+        self.VSWRQ1 = self.l.addPlot(row=1, col=0, name='VSWRQ1', title='Q1 VSWR (<font color="blue">Gauche</font>, <font color="red">Droite</font>)')
+        self.VSWRQ2 = self.l.addPlot(row=1, col=1, name='VSWRQ2', title='Q2 VSWR (<font color="blue">gauche</font>, <font color="red">Droite</font>)')
+        self.VSWRQ4 = self.l.addPlot(row=1, col=2, name='VSWRQ4', title='Q4 VSWR (<font color="blue">Gauche</font>, <font color="red">Droite</font>)')
+        self.VSWRQ1.setXLink(self.PowQ1)
+        self.VSWRQ2.setXLink(self.PowQ2)
+        self.VSWRQ4.setXLink(self.PowQ4)
+        
+        # 3nd row : RF voltages
+        self.VolQ1 = self.l.addPlot(row=2, col=0, name='Vol1', title='Q1 Voltages (<font color="blue">V1</font>, <font color="red">V2</font>, <font color="green">V3</font>, <font color="magenta">V4</font>)')        
+        self.VolQ2 = self.l.addPlot(row=2, col=1, name='Vol2', title='Q2 Voltages (<font color="blue">V1</font>, <font color="red">V2</font>, <font color="green">V3</font>, <font color="magenta">V4</font>)') 
+        self.VolQ4 = self.l.addPlot(row=2, col=2, name='Vol4', title='Q4 Voltages (<font color="blue">V1</font>, <font color="red">V2</font>, <font color="green">V3</font>, <font color="magenta">V4</font>)')
         self.VolQ1.setXLink(self.PowQ1)
         self.VolQ2.setXLink(self.PowQ2)
         self.VolQ4.setXLink(self.PowQ4)   
         
-        # 3rd row : RF phase
-        self.PhaQ1 = self.l.addPlot(row=2, col=0, name='Pha1', title='Q1 Phase (Ph4+Ph1-Ph6, Ph5+Ph1-Ph7)')
-        self.PhaQ2 = self.l.addPlot(row=2, col=1, name='Pha2', title='Q2 Phase (Ph4+Ph1-Ph6, Ph5+Ph1-Ph7)')
-        self.PhaQ4 = self.l.addPlot(row=2, col=2, name='Pha4', title='Q4 Phase (Ph4+Ph1-Ph6, Ph5+Ph1-Ph7)')
+        # 4rd row : RF phase
+        self.PhaQ1 = self.l.addPlot(row=3, col=0, name='Pha1', title='Q1 Phase (Ph4+Ph1-Ph6, Ph5+Ph1-Ph7)')
+        self.PhaQ2 = self.l.addPlot(row=3, col=1, name='Pha2', title='Q2 Phase (Ph4+Ph1-Ph6, Ph5+Ph1-Ph7)')
+        self.PhaQ4 = self.l.addPlot(row=3, col=2, name='Pha4', title='Q4 Phase (Ph4+Ph1-Ph6, Ph5+Ph1-Ph7)')
         self.PhaQ1.setXLink(self.PowQ1)
         self.PhaQ2.setXLink(self.PowQ2)
         self.PhaQ4.setXLink(self.PowQ4)        
@@ -138,7 +151,8 @@ class AppForm(QMainWindow):
         
         self.cross = CrossHairManager()
         self.cross.linkWithPlotItem(self.PowQ2)
-
+        self.cross.linkWithPlotItem(self.VolQ2)
+        self.cross.linkWithPlotItem(self.PhaQ2)
         
     def get_local_file_list(self):
         return io.list_local_files(local_data_path=LOCAL_PATH)
@@ -181,8 +195,8 @@ class AppForm(QMainWindow):
             selected_shot = item.text()
             
             msgBox = QMessageBox()
-            msgBox.setText(f'Voulez-vous supprimer les données associées au choc {selected_shot}')
-            msgBox.setInformativeText('Les fichiers seront supprimés localement ET sur le serveur dfci')
+            msgBox.setText(f'Voulez-vous supprimer les donnees associees au choc {selected_shot}')
+            msgBox.setInformativeText('Les fichiers seront supprimees localement ET sur le serveur dfci')
             msgBox.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
             msgBox.setDefaultButton(QMessageBox.No)
             reply = msgBox.exec_()
@@ -264,17 +278,32 @@ class AppForm(QMainWindow):
         try:
             # Q1
             if not self.data[self.shot].Q1_amplitude.empty:
-                self.PowQ1.plot(pen='b', x=self.data[self.shot].Q1_amplitude['PiG'].index/1e6, 
-                              y=self.data[self.shot].Q1_amplitude['PiG'].values/10, clear=True)
-                self.PowQ1.plot(pen='r', x=self.data[self.shot].Q1_amplitude['PrG'].index/1e6, 
-                              y=self.data[self.shot].Q1_amplitude['PrG'].values/10)
-                self.PowQ1.plot(pen='g', x=self.data[self.shot].Q1_amplitude['PiD'].index/1e6, 
-                              y=self.data[self.shot].Q1_amplitude['PiD'].values/10)
-                self.PowQ1.plot(pen='m', x=self.data[self.shot].Q1_amplitude['PrD'].index/1e6, 
-                              y=self.data[self.shot].Q1_amplitude['PrD'].values/10)
+                tG = self.data[self.shot].Q1_amplitude['PiG'].index/1e6
+                tD = self.data[self.shot].Q1_amplitude['PiD'].index/1e6
+                PiG = self.data[self.shot].Q1_amplitude['PiG'].values/10
+                PiD = self.data[self.shot].Q1_amplitude['PiD'].values/10
+                PrG = self.data[self.shot].Q1_amplitude['PrG'].values/10
+                PrD = self.data[self.shot].Q1_amplitude['PrD'].values/10
+                try:
+                    # filter unphysical values
+                    VSWR_Q1_G = np.abs((1 + np.sqrt(PrG/PiG))/(1 - np.sqrt(PrG/PiG)))
+                    VSWR_Q1_G = np.where(VSWR_Q1_G<40, VSWR_Q1_G, 0)
+                    VSWR_Q1_D = np.abs((1 + np.sqrt(PrD/PiD))/(1 - np.sqrt(PrD/PiD)))
+                    VSWR_Q1_D = np.where(VSWR_Q1_D<40, VSWR_Q1_D, 0)
+                except ValueError as e:
+                    VSWR_Q1_G = np.zeros_like(PiG)
+                    VSWR_Q1_D = np.zeros_like(PiD)
+                               
+                self.PowQ1.plot(pen='b', x=tG, y=PiG, clear=True)
+                self.PowQ1.plot(pen='r', x=tG, y=PrG)
+                self.PowQ1.plot(pen='g', x=tD, y=PiD)
+                self.PowQ1.plot(pen='m', x=tD, y=PrD)
                 self.PowQ1.plot(pen='k', x=self.data[self.shot].Q1_amplitude['Consigne'].index/1e6, 
                               y=self.data[self.shot].Q1_amplitude['Consigne'].values/10/2) 
-                              
+                
+                self.VSWRQ1.plot(pen='b', x=tG, y=VSWR_Q1_G, clear=True)
+                self.VSWRQ1.plot(pen='r', x=tD, y=VSWR_Q1_D)
+                self.VSWRQ1.setYRange(1, 5)
                 
                 self.VolQ1.plot(pen='b', x=self.data[self.shot].Q1_amplitude['V1'].index/1e6,
                                y=self.data[self.shot].Q1_amplitude['V1'].values, clear=True)
@@ -297,16 +326,32 @@ class AppForm(QMainWindow):
 
             # Q2 
             if not self.data[self.shot].Q2_amplitude.empty:
-                self.PowQ2.plot(pen='b', x=self.data[self.shot].Q2_amplitude['PiG'].index/1e6, 
-                              y=self.data[self.shot].Q2_amplitude['PiG'].values/10, clear=True)
-                self.PowQ2.plot(pen='r', x=self.data[self.shot].Q2_amplitude['PrG'].index/1e6, 
-                              y=self.data[self.shot].Q2_amplitude['PrG'].values/10)
-                self.PowQ2.plot(pen='g', x=self.data[self.shot].Q2_amplitude['PiD'].index/1e6, 
-                              y=self.data[self.shot].Q2_amplitude['PiD'].values/10)
-                self.PowQ2.plot(pen='m', x=self.data[self.shot].Q2_amplitude['PrD'].index/1e6, 
-                              y=self.data[self.shot].Q2_amplitude['PrD'].values/10)
+                tG = self.data[self.shot].Q2_amplitude['PiG'].index/1e6
+                tD = self.data[self.shot].Q2_amplitude['PiD'].index/1e6
+                PiG = self.data[self.shot].Q2_amplitude['PiG'].values/10
+                PiD = self.data[self.shot].Q2_amplitude['PiD'].values/10
+                PrG = self.data[self.shot].Q2_amplitude['PrG'].values/10
+                PrD = self.data[self.shot].Q2_amplitude['PrD'].values/10
+                try:
+                    # filter unphysical values
+                    VSWR_Q2_G = np.abs((1 + np.sqrt(PrG/PiG))/(1 - np.sqrt(PrG/PiG)))
+                    VSWR_Q2_G = np.where(VSWR_Q2_G<40, VSWR_Q2_G, 0)
+                    VSWR_Q2_D = np.abs((1 + np.sqrt(PrD/PiD))/(1 - np.sqrt(PrD/PiD)))
+                    VSWR_Q2_D = np.where(VSWR_Q2_D<40, VSWR_Q2_D, 0)
+                except ValueError as e:
+                    VSWR_Q2_G = np.zeros_like(PiG)
+                    VSWR_Q2_D = np.zeros_like(PiD)
+                               
+                self.PowQ2.plot(pen='b', x=tG, y=PiG, clear=True)
+                self.PowQ2.plot(pen='r', x=tG, y=PrG)
+                self.PowQ2.plot(pen='g', x=tD, y=PiD)
+                self.PowQ2.plot(pen='m', x=tD, y=PrD)
                 self.PowQ2.plot(pen='k', x=self.data[self.shot].Q2_amplitude['Consigne'].index/1e6, 
                               y=self.data[self.shot].Q2_amplitude['Consigne'].values/10/2) 
+                
+                self.VSWRQ2.plot(pen='b', x=tG, y=VSWR_Q2_G, clear=True)
+                self.VSWRQ2.plot(pen='r', x=tD, y=VSWR_Q2_D)
+                self.VSWRQ2.setYRange(1, 5)
                 
                 self.VolQ2.plot(pen='b', x=self.data[self.shot].Q2_amplitude['V1'].index/1e6,
                                y=self.data[self.shot].Q2_amplitude['V1'].values, clear=True)
@@ -329,17 +374,32 @@ class AppForm(QMainWindow):
 
             # Q4
             if not self.data[self.shot].Q4_amplitude.empty:
-                self.PowQ4.plot(pen='b', x=self.data[self.shot].Q4_amplitude['PiG'].index/1e6, 
-                              y=self.data[self.shot].Q4_amplitude['PiG'].values/10, clear=True)
-                self.PowQ4.plot(pen='r', x=self.data[self.shot].Q4_amplitude['PrG'].index/1e6, 
-                              y=self.data[self.shot].Q4_amplitude['PrG'].values/10)
-                self.PowQ4.plot(pen='g', x=self.data[self.shot].Q4_amplitude['PiD'].index/1e6, 
-                              y=self.data[self.shot].Q4_amplitude['PiD'].values/10)
-                self.PowQ4.plot(pen='m', x=self.data[self.shot].Q4_amplitude['PrD'].index/1e6, 
-                              y=self.data[self.shot].Q4_amplitude['PrD'].values/10)
+                tG = self.data[self.shot].Q4_amplitude['PiG'].index/1e6
+                tD = self.data[self.shot].Q4_amplitude['PiD'].index/1e6
+                PiG = self.data[self.shot].Q4_amplitude['PiG'].values/10
+                PiD = self.data[self.shot].Q4_amplitude['PiD'].values/10
+                PrG = self.data[self.shot].Q4_amplitude['PrG'].values/10
+                PrD = self.data[self.shot].Q4_amplitude['PrD'].values/10
+                #try:
+                    #VSWR_Q4_G = (1 + np.sqrt(PrG/PiG))/(1 - np.sqrt(PrG/PiG))
+                    #VSWR_Q4_D = (1 + np.sqrt(PrD/PiD))/(1 - np.sqrt(PrD/PiD))
+
+                #except Exception as e:
+                VSWR_Q4_G = np.zeros_like(PiG)
+                VSWR_Q4_D = np.zeros_like(PiD)
+ 
+                self.PowQ4.plot(pen='b', x=tG, y=PiG, clear=True)
+                self.PowQ4.plot(pen='r', x=tG, y=PrG)
+                self.PowQ4.plot(pen='g', x=tD, y=PiD)
+                self.PowQ4.plot(pen='m', x=tD, y=PrD)               
+                
                 self.PowQ4.plot(pen='k', x=self.data[self.shot].Q4_amplitude['Consigne'].index/1e6, 
                               y=self.data[self.shot].Q4_amplitude['Consigne'].values/10/2)
-                                              
+                              
+                self.VSWRQ4.plot(pen='b', x=tG, y=VSWR_Q4_G)
+                self.VSWRQ4.plot(pen='r', x=tD, y=VSWR_Q4_D)
+                self.VSWRQ4.setYRange(1, 5)
+                                                             
                 self.VolQ4.plot(pen='b', x=self.data[self.shot].Q4_amplitude['V1'].index/1e6,
                                y=self.data[self.shot].Q4_amplitude['V1'].values, clear=True)
                 self.VolQ4.plot(pen='r', x=self.data[self.shot].Q4_amplitude['V2'].index/1e6,
@@ -359,7 +419,7 @@ class AppForm(QMainWindow):
                                  self.data[self.shot].Q4_phase['Ph7'].values/100) % 360)
                     
         except AttributeError as e:
-            print('No data in the shot!')
+            print('No data or error in data in the shot!')
             print(e)
 
 def main():
